@@ -1,0 +1,18 @@
+{
+  "achievementpercentages": {
+    "achievements": [
+      {
+        "name": "WIN_PISTOLROUND",
+        "percent": 45.2
+      },
+      {
+        "name": "WIN_BOMB_PLANT",
+        "percent": 38.7
+      },
+      {
+        "name": "KILL_ENEMY_DEAGLE",
+        "percent": 12.3
+      }
+    ]
+  }
+}

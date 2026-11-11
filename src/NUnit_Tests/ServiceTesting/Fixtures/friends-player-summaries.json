@@ -1,0 +1,20 @@
+{
+  "response": {
+    "players": [
+      {
+        "steamid": "76561198000000002",
+        "personaname": "TestPlayerTwo",
+        "profileurl": "https://steamcommunity.com/id/testplayertwo",
+        "avatarfull": "",
+        "gameextrainfo": "Counter-Strike 2"
+      },
+      {
+        "steamid": "76561198000000003",
+        "personaname": "TestPlayerThree",
+        "profileurl": "https://steamcommunity.com/id/testplayerthree",
+        "avatarfull": "",
+        "gameextrainfo": ""
+      }
+    ]
+  }
+}

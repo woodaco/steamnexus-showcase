@@ -1,0 +1,142 @@
+﻿<!DOCTYPE html>
+@using SteamProject.Helpers
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    const string siteDescription = "SteamNexus links your Steam account to track achievements, browse your library and run achievement competitions with friends. A university capstone web app built with ASP.NET Core 8 MVC.";
+    var pageDescription = ViewData["Description"] as string ?? siteDescription;
+    var siteOrigin = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    var isSignedIn = User?.Identity?.IsAuthenticated ?? false;
+    var isDemo = SteamProject.Demo.DemoMode.IsDemoSession(User);
+}
+
+<html lang="en">
+<head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SteamNexus</title>
+    <meta name="description" content="@pageDescription" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="SteamNexus" />
+    <meta property="og:title" content="@ViewData["Title"] - SteamNexus" />
+    <meta property="og:description" content="@pageDescription" />
+    <meta property="og:url" content="@(siteOrigin + Context.Request.PathBase + Context.Request.Path)" />
+    <meta property="og:image" content="@(siteOrigin + Context.Request.PathBase)/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="SteamNexus: track Steam achievements and compete with friends" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/design-tokens.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/components.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/SteamProject.styles.css" asp-append-version="true" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+</head>
+<body data-authenticated="@(isSignedIn.ToString().ToLowerInvariant())">
+@Html.AntiForgeryToken()
+<!-- Page loader - hidden when content ready -->
+<div class="sn-page-loader">
+    <div class="sn-spinner sn-spinner-xl"></div>
+    <div class="sn-page-loader-text">Loading SteamNexus...</div>
+</div>
+
+<div id="badge-award-popup" class="badge-popup" style="display: none;">
+    <div class="badge-popup-content">
+        <span id="close-badge-popup" class="badge-popup-close">&times;</span>
+        <h4 class="center">Badge Unlocked</h4>
+        <div id="badge-info"></div>
+    </div>
+</div>
+
+
+<header>
+    <nav class="navbar">
+        @if (isSignedIn)
+        {
+            <button class="sn-nav-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#snOffcanvasNav"
+                    aria-controls="snOffcanvasNav" aria-label="Open navigation menu">
+                <i class="bi bi-list" aria-hidden="true"></i>
+            </button>
+        }
+        <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+            <span class="navbar-logo-text">SteamNexus</span>
+        </a>
+        <partial name="_LoginPartial" style="display: flex; color: #fff;"/>
+    </nav>
+</header>
+@if (isDemo)
+{
+    <div class="sn-demo-banner" id="demo-banner" role="status">
+        <span><i class="bi bi-eye" aria-hidden="true"></i> @SteamProject.Demo.DemoMode.BannerText.
+            The account and its data are fictional, changes are turned off and the session ends after
+            @((int)SteamProject.Demo.DemoMode.SessionLength.TotalMinutes) minutes.</span>
+        <form method="post" asp-area="" asp-controller="Demo" asp-action="Exit" class="sn-demo-banner-form">
+            <button type="submit" id="demo-exit" class="sn-demo-banner-exit">Exit demo</button>
+        </form>
+    </div>
+}
+@* Every sidebar destination requires sign-in, so anonymous visitors get no sidebar at all
+   (the Privacy page stays reachable from the footer). *@
+@if (isSignedIn)
+{
+    <nav class="vert-nav" aria-label="Main">
+        <div class="nav-header">
+            <a asp-area="" asp-controller="Home" asp-action="Index">
+                <span class="short-logo-text">SN</span>
+                <span class="long-logo-text">SteamNexus</span>
+            </a>
+        </div>
+        <div class="nav-body">
+            <partial name="_NavLinks" model="@string.Empty" />
+        </div>
+    </nav>
+
+    @* At 768px and below the fixed sidebar is hidden and this Bootstrap off-canvas menu replaces it. *@
+    <div class="offcanvas offcanvas-start sn-offcanvas-nav" tabindex="-1" id="snOffcanvasNav" aria-labelledby="snOffcanvasNavLabel">
+        <div class="offcanvas-header">
+            <h2 class="offcanvas-title" id="snOffcanvasNavLabel">SteamNexus</h2>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close navigation menu"></button>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="nav-body" aria-label="Main (mobile)">
+                <partial name="_NavLinks" model="@("oc-")" />
+            </nav>
+        </div>
+    </div>
+}
+
+@* Messaging is a write feature, so the read-only demo persona does not get the chat widget. *@
+@if (User?.Identity?.Name != null && !isDemo)
+{
+    @await Component.InvokeAsync("Messages")
+}
+<div class="container">
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <span class="footer-brand">SteamNexus © @DateTime.Now.Year</span>
+        <a class="footer-privacy" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy Policy</a>
+        <a class="footer-support" href="https://portfolionexus.azurewebsites.net/Cole" target="_blank" rel="noopener">Contact Cole Woodard</a>
+        @if (isSignedIn && !isDemo)
+        {
+            @await Component.InvokeAsync("ThemeSwitcher")
+        }
+    </div>
+    <link id="theme-link" rel="stylesheet" href="~/css/@(Context.Items["Theme"] ?? "light")-theme.css" asp-append-version="true" />
+</footer>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+<script src="~/js/loading.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

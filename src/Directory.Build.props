@@ -1,0 +1,20 @@
+<Project>
+  <!--
+    NuGet vulnerability audit is OFF for every project in this solution.
+
+    Why: the Night Shift gates (dotnet-build, dotnet-test, dotnet-warnings) run
+    with network: none by design. With the audit on, restore tries to download
+    vulnerability data from api.nuget.org, fails, and emits one NU1900 warning
+    per project ("Unable to load the service index") on EVERY build, including
+    a no-op incremental one. Those are not findings about this code; they are
+    the offline sandbox talking. They alone pushed the dotnet-warnings ratchet
+    (budget 0) red on main.
+
+    Dependency vulnerability checking belongs in an online job, e.g.
+    `dotnet list src/SteamProject.sln package vulnerable` or by re-enabling
+    with `dotnet build -p:NuGetAudit=true` where the network is available.
+  -->
+  <PropertyGroup>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+</Project>

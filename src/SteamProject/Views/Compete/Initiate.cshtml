@@ -1,0 +1,98 @@
+@model SteamProject.ViewModels.CompeteInitiateVM
+@{
+    ViewData["Title"] = "Duel Initiation";
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/Compete.css">
+</head>
+
+
+<div class="compete-initiate-container">
+    <h1> Competition Initiation </h1>
+
+    <h3> Achievements you're both missing: </h3>
+    <div class="row achievements-row">
+        @foreach ( var achievement in Model.UsersAchievements )
+        {
+            <div class="col-md-2 achievement-col">
+
+                <br>
+
+                <div class="achievementDiv">
+                    <div class="card achievementCard">
+                        <img class="card-img-top achievement-icon" src="@achievement.Achievement.IconAchievedUrl" alt="@achievement.Achievement.DisplayName">
+                        <div class="card-body">
+                            <p class="card-title achievement-name"> @achievement.Achievement.DisplayName </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if( !Model.CurrentCompetition.CompetitionPlayers.Any() )
+    {
+        <button id="ModalBtn" class="sn-btn sn-btn-primary initiate-btn">
+            Initiate Competition?
+        </button>
+    }
+
+
+</div>
+
+<div id="compareModal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" id="compareModalHeader">
+                <h1 class="modal-title-center"> !!! Competition Creation !!! </h1>
+                <button type="button" class="btn-close btn-close-white" id="modalCloser" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <img src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/header.jpg", @Model.ChosenGame.AppId)" class="initiate-game-img" alt="@string.Format("{0}", @Model.ChosenGame.Name)">
+                    </div>
+                    <div class="col-md-4">
+                        @* The mass-assigning Initiate POST action is retired (it could overwrite any
+                           Competition by a request-supplied Id). This form now hands off to the
+                           validated Compete/Create flow below: it posts the opponent, game, dates and
+                           the shared-missing achievements as display names, which Create re-resolves
+                           server-side. Create builds the Competition itself with a fresh DB-assigned
+                           Id, so nothing here can carry a Competition.Id into a write. *@
+                        <form id="DateSelection" method="post" asp-action="Create" asp-controller="Compete" class="initiate-form">
+                            <input type="hidden" name="SteamId" value="@Model.MySteamId">
+                            <input type="hidden" name="OpponentId" value="@Model.MyFriendId">
+                            <input type="hidden" name="GameAppId" value="@Model.ChosenGame.AppId">
+                            @foreach( var achievement in Model.UsersAchievements )
+                            {
+                                @if( achievement.Achievement?.DisplayName is not null )
+                                {
+                                    <input type="hidden" name="AchievementDisplayNames" value="@achievement.Achievement.DisplayName">
+                                }
+                            }
+
+                            <label class="control-label form-label" for="CompStartTime">Start Date:</label>
+                            <span class="text-danger"></span>
+                            <input id="StartDateInput" class="compTimeIn" type="datetime-local" value="@Model.CurrentCompetition.StartDate.ToString("yyyy-MM-ddTHH:mm")" name="CompStartTime" required>
+
+                            <label class="control-label form-label mt-3" for="CompEndTime">End Date:</label>
+                            <span class="text-danger"></span>
+                            <input id="EndDateInput" class="compTimeIn" type="datetime-local" value="@Model.CurrentCompetition.EndDate.ToString("yyyy-MM-ddTHH:mm")" name="CompEndTime" required>
+
+                            <div class="mt-4">
+                                <input type="submit" value="Begin Tracking" class="sn-btn sn-btn-primary">
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script type="text/javascript" src="~/js/competeInitPage.js"></script>
+}

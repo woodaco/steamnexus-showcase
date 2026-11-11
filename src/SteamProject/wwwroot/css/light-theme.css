@@ -1,0 +1,1152 @@
+/*
+ * SteamNexus Light Theme
+ * Complete overrides for light mode visibility
+ */
+
+/* ========================================
+   BASE & TYPOGRAPHY
+   ======================================== */
+
+body {
+    background-color: var(--color-bg-light-1);
+    color: var(--color-text-dark);
+}
+
+p, ul, li, span, div {
+    color: var(--color-text-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-dark);
+}
+
+hr {
+    border-color: var(--color-bg-light-3);
+    background-color: var(--color-bg-light-3);
+}
+
+a {
+    color: var(--color-primary-start);
+}
+
+a:hover {
+    color: var(--color-primary-end);
+}
+
+/* ========================================
+   NAVIGATION - Vertical Sidebar
+   Keep dark even in light mode
+   ======================================== */
+
+/* No overrides - navbar stays dark */
+
+/* ========================================
+   TOP NAVBAR - Keep dark
+   ======================================== */
+
+/* No overrides - stays dark */
+
+/* ========================================
+   FOOTER - Keep dark
+   ======================================== */
+
+/* No overrides - stays dark */
+
+/* ========================================
+   ADMIN DASHBOARD
+   ======================================== */
+
+.admin-container {
+    background: var(--color-bg-light-1);
+}
+
+.admin-header h1 {
+    color: var(--color-text-dark);
+}
+
+.admin-header h2 {
+    color: var(--color-text-dark-secondary);
+}
+
+.admin-nav {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.admin-nav-section-label {
+    color: var(--color-text-dark-secondary);
+    border-bottom-color: var(--color-bg-light-3);
+}
+
+.admin-nav-link {
+    color: var(--color-text-dark);
+}
+
+.admin-nav-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--color-primary-start);
+}
+
+.admin-nav-link.admin-action {
+    background: rgba(255, 152, 0, 0.08);
+    border-color: rgba(255, 152, 0, 0.3);
+    color: #e65100;
+}
+
+.admin-nav-link.admin-action:hover {
+    background: rgba(255, 152, 0, 0.15);
+    border-color: #ff9800;
+    color: #ff6d00;
+}
+
+.admin-card {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.admin-card-title {
+    color: var(--color-text-dark);
+}
+
+.admin-card-content {
+    color: var(--color-text-dark-secondary);
+}
+
+.admin-table {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+}
+
+.admin-table thead {
+    background: var(--color-bg-light-2);
+}
+
+.admin-table th {
+    color: var(--color-text-dark);
+    border-bottom-color: var(--color-bg-light-3);
+}
+
+.admin-table td {
+    color: var(--color-text-dark);
+    border-bottom-color: var(--color-bg-light-3);
+}
+
+.admin-table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.admin-stat-card {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.admin-stat-label {
+    color: var(--color-text-dark-secondary);
+}
+
+.admin-input {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.admin-input::placeholder {
+    color: var(--color-text-dark-secondary);
+}
+
+.admin-empty {
+    color: var(--color-text-dark-secondary);
+}
+
+/* ========================================
+   FORMS & INPUTS
+   ======================================== */
+
+input, select, textarea {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--color-text-dark-secondary);
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--color-primary-start);
+    background: var(--color-bg-light-1);
+}
+
+.form-control {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.form-control:focus {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-primary-start);
+    color: var(--color-text-dark);
+}
+
+.form-control::placeholder {
+    color: var(--color-text-dark-secondary);
+}
+
+.form-floating > label {
+    color: var(--color-text-dark-secondary);
+}
+
+label, .form-label {
+    color: var(--color-text-dark);
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+
+table {
+    color: var(--color-text-dark);
+}
+
+th, td {
+    color: var(--color-text-dark);
+    border-color: var(--color-bg-light-3);
+}
+
+tr {
+    color: var(--color-text-dark);
+}
+
+.table {
+    color: var(--color-text-dark);
+}
+
+.table-dark {
+    background: var(--color-bg-light-2);
+    color: var(--color-text-dark);
+}
+
+.table-dark th,
+.table-dark td {
+    color: var(--color-text-dark);
+    border-color: var(--color-bg-light-3);
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background: var(--color-bg-light-2);
+}
+
+.table-warning {
+    background: rgba(255, 193, 7, 0.15);
+    color: var(--color-text-dark);
+}
+
+#friendsListTable tr:nth-child(even) {
+    background-color: var(--color-bg-light-2);
+}
+
+/* ========================================
+   CARDS
+   ======================================== */
+
+.card {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+}
+
+.card-header {
+    background: var(--color-bg-light-2);
+    border-bottom-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.card-body {
+    color: var(--color-text-dark);
+}
+
+.card-footer {
+    background: var(--color-bg-light-2);
+    border-top-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.card-title, .card-text {
+    color: var(--color-text-dark);
+}
+
+.userCard {
+    background: linear-gradient(135deg, var(--color-bg-light-1) 0%, var(--color-bg-light-3) 80%);
+}
+
+/* Dashboard.css sets .competition-card-title to the (white) dark-theme text token; on the light
+   .userCard gradient that made finished-competition titles unreadable. */
+.userCard .competition-card-title {
+    color: var(--color-text-dark);
+}
+
+/* The running-competition card keeps its dark --color-bg-card background in the light theme, so its
+   Starts / Created by / Ends line must stay light (the generic light .card-text rule made it dark-on-dark). */
+.competition-userCard .competition-details .card-text {
+    color: var(--color-text-primary);
+}
+
+/* ========================================
+   MODALS
+   ======================================== */
+
+.modal-content {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+}
+
+.modal-header {
+    background: var(--color-bg-light-2);
+    border-bottom-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.modal-body {
+    background: var(--color-bg-light-1);
+    color: var(--color-text-dark);
+}
+
+.modal-footer {
+    background: var(--color-bg-light-2);
+    border-top-color: var(--color-bg-light-3);
+}
+
+.modal-title {
+    color: var(--color-text-dark);
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+.btn-primary {
+    color: #ffffff;
+}
+
+.btn-secondary {
+    background: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+    border-color: var(--color-bg-light-3);
+}
+
+.btn-secondary:hover {
+    background: var(--color-bg-light-2);
+    color: var(--color-text-dark);
+}
+
+.link-btn {
+    background: var(--color-primary);
+    color: #ffffff;
+    border: 1px solid var(--color-primary-start);
+}
+
+.summarize-btn {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.show-followed-btn {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+/* ========================================
+   ALERTS
+   ======================================== */
+
+.alert-success {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: rgba(40, 167, 69, 0.2);
+    color: #1e7e34;
+}
+
+.alert-danger {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.2);
+    color: #bd2130;
+}
+
+.alert-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.2);
+    color: #856404;
+}
+
+.alert-info {
+    background: rgba(23, 162, 184, 0.1);
+    border-color: rgba(23, 162, 184, 0.2);
+    color: #0c5460;
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+
+.badge {
+    color: #ffffff;
+}
+
+.badge.bg-success {
+    background: var(--color-accent-green);
+}
+
+.badge.bg-danger {
+    background: var(--color-accent-red);
+}
+
+.badge.bg-warning {
+    background: var(--color-accent-orange);
+    color: var(--color-text-dark);
+}
+
+/* ========================================
+   MESSAGES PANEL
+   ======================================== */
+
+.messages-btn {
+    color: #ffffff;
+}
+
+.message-container {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.messages-header {
+    background: var(--color-primary);
+}
+
+.messages-label {
+    color: #ffffff;
+}
+
+#message-exit {
+    color: #ffffff;
+}
+
+.messages-body {
+    color: var(--color-text-dark);
+}
+
+.message-contacts {
+    background: var(--color-bg-light-2);
+    border-right-color: var(--color-bg-light-3);
+}
+
+.contact-label {
+    color: var(--color-text-dark-secondary);
+}
+
+.contact {
+    border-color: var(--color-bg-light-3);
+    background: var(--color-bg-light-1);
+}
+
+.contact:hover {
+    border-color: var(--color-primary-start);
+}
+
+.contact.active {
+    border-color: var(--color-primary-start);
+}
+
+.contact-icon {
+    color: var(--color-text-dark-secondary);
+}
+
+.contact-header {
+    background: var(--color-bg-light-2);
+    border-bottom-color: var(--color-bg-light-3);
+}
+
+.contact-name {
+    color: var(--color-text-dark);
+}
+
+.messages-for-contact {
+    background: var(--color-bg-light-1);
+}
+
+.from-message-content {
+    background: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.to-message-content {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.from-message-time,
+.to-message-time {
+    color: var(--color-text-dark-secondary);
+}
+
+.send-message {
+    background: var(--color-bg-light-2);
+    border-top-color: var(--color-bg-light-3);
+}
+
+.message-text-box {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.message-text-box::placeholder {
+    color: var(--color-text-dark-secondary);
+}
+
+#send-message-btn {
+    color: var(--color-primary-start);
+}
+
+/* ========================================
+   LIBRARY PAGE
+   ======================================== */
+
+.library-header {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.library-user-info h1 {
+    color: var(--color-text-dark);
+}
+
+.steam-profile-link {
+    color: var(--color-primary-start);
+}
+
+.lib-action-btn {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.lib-action-btn:hover {
+    background: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.lib-action-btn.primary {
+    color: #ffffff;
+}
+
+.library-controls {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.library-filter label {
+    color: var(--color-text-dark-secondary);
+}
+
+#search-input {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+#search-input::placeholder {
+    color: var(--color-text-dark-secondary);
+}
+
+.library-filter select {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.gameContainer {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+}
+
+.genreRank {
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--color-accent-gold);
+    border-color: var(--color-accent-gold);
+}
+
+/* Filter Panel */
+.filter-panel {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.filter-section-title {
+    color: var(--color-text-dark);
+}
+
+.filter-section-clear {
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark-secondary);
+}
+
+.filter-chip span {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark-secondary);
+}
+
+.filter-chip:hover span {
+    background: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.filter-chip input[type="checkbox"]:checked + span {
+    color: #ffffff;
+}
+
+.filter-toggle-btn {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+.filter-toggle-btn:hover,
+.filter-toggle-btn.active {
+    color: #ffffff;
+}
+
+.filter-message {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.2);
+    color: var(--color-text-dark);
+}
+
+/* ========================================
+   PROFILE / IDENTITY PAGES
+   ======================================== */
+
+.profile-header-row {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.profile-name-level h1 {
+    color: var(--color-text-dark);
+}
+
+.steam-level-badge {
+    color: #ffffff;
+}
+
+.profile-form-col {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.profile-form-col h4 {
+    color: var(--color-text-dark);
+}
+
+.friends-list-container {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.friends-list-container h4 {
+    color: var(--color-text-dark);
+    border-bottom-color: var(--color-bg-light-3);
+}
+
+.FriendEntry {
+    border-bottom-color: var(--color-bg-light-3);
+}
+
+.FriendEntry td {
+    color: var(--color-text-dark);
+}
+
+.FriendStateTd {
+    color: var(--color-text-dark-secondary);
+}
+
+.FriendGame {
+    color: var(--color-primary-start);
+}
+
+/* Nav pills */
+.nav-pills {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.nav-pills .nav-link {
+    color: var(--color-text-dark-secondary);
+}
+
+.nav-pills .nav-link:hover {
+    color: var(--color-text-dark);
+}
+
+.nav-pills .nav-link.active {
+    color: #ffffff;
+}
+
+/* ========================================
+   DASHBOARD PAGE
+   ======================================== */
+
+.dashboard-card,
+.stat-card,
+.activity-card {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.dashboard-card h2,
+.dashboard-card h3,
+.dashboard-card h4,
+.stat-card h2,
+.stat-card h3 {
+    color: var(--color-text-dark);
+}
+
+.dashboard-card p,
+.stat-card p {
+    color: var(--color-text-dark-secondary);
+}
+
+/* ========================================
+   COMPETE PAGE
+   ======================================== */
+
+.compete-card,
+.competition-card {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.compete-card h1,
+.compete-card h2,
+.compete-card h3,
+.competition-card h1,
+.competition-card h2,
+.competition-card h3 {
+    color: var(--color-text-dark);
+}
+
+.compete-card p,
+.competition-card p {
+    color: var(--color-text-dark-secondary);
+}
+
+/* Compete.css colours every <strong> with the white dark-theme token, which hid the leaderboard
+   heading and player names on the light page. */
+#CompletionLeaderboard strong {
+    color: var(--color-text-dark);
+}
+
+/* ========================================
+   FRIENDS PAGE
+   ======================================== */
+
+.friend-card {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.friend-card h3,
+.friend-card h4 {
+    color: var(--color-text-dark);
+}
+
+.friend-card p {
+    color: var(--color-text-dark-secondary);
+}
+
+/* ========================================
+   LANDING / HOME PAGE
+   ======================================== */
+
+.land-section {
+    color: var(--color-text-dark);
+}
+
+.minor1, .minor2 {
+    color: var(--color-text-dark);
+}
+
+/* Major headings with gradient should stay gradient */
+.major1 {
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+/* Landing feature cards */
+.feature-card {
+    background: linear-gradient(145deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+    border-color: rgba(102, 126, 234, 0.15);
+}
+
+.feature-card-title,
+.feature-card-text,
+.source-note {
+    color: var(--color-text-dark);
+}
+
+/* Keep the icon glyph white on its gradient circle */
+.feature-card-icon {
+    color: #ffffff;
+}
+
+/* Steam signup button */
+.steam-pill {
+    background: linear-gradient(135deg, #1b2838 0%, #2a475e 100%);
+    color: #ffffff;
+}
+
+.register-link {
+    color: #ffffff;
+}
+
+/* ========================================
+   CAROUSEL
+   ======================================== */
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: rgba(102, 126, 234, 0.8);
+}
+
+.carousel-inner {
+    border-color: var(--color-primary-start);
+    background-color: var(--color-bg-light-3);
+}
+
+/* ========================================
+   NEWS SECTION
+   ======================================== */
+
+.news-title {
+    color: var(--color-text-dark);
+}
+
+.news-title-main {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.feedtype {
+    color: var(--color-primary-start);
+}
+
+.timestamp {
+    color: var(--color-text-dark-secondary);
+}
+
+/* ========================================
+   GAME INFO
+   ======================================== */
+
+.gameInfoCard {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.game-info-container,
+.info-card {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.game-info-container h1,
+.game-info-container h2,
+.game-info-container h3,
+.info-card h1,
+.info-card h2,
+.info-card h3 {
+    color: var(--color-text-dark);
+}
+
+.game-info-container p,
+.info-card p {
+    color: var(--color-text-dark-secondary);
+}
+
+/* ========================================
+   ACHIEVEMENT MODAL
+   ======================================== */
+
+.ach-modal-content {
+    background: linear-gradient(135deg, var(--color-bg-light-1) 0%, var(--color-bg-light-2) 100%);
+}
+
+.earned-label {
+    color: var(--color-text-dark-secondary);
+}
+
+.ach-earned {
+    color: var(--color-accent-gold);
+}
+
+.ach-name {
+    color: var(--color-text-dark-secondary);
+}
+
+/* ========================================
+   BADGE POPUP
+   ======================================== */
+
+.badge-popup-content {
+    background: var(--color-bg-light-1);
+    border: 2px solid var(--color-primary-start);
+    color: var(--color-text-dark);
+}
+
+/* ========================================
+   LOADING COMPONENTS
+   ======================================== */
+
+.sn-page-loader {
+    background: var(--color-bg-light-1);
+}
+
+.sn-page-loader-text {
+    color: var(--color-text-dark-secondary);
+}
+
+.sn-skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--color-bg-light-2) 25%,
+        var(--color-bg-light-3) 50%,
+        var(--color-bg-light-2) 75%
+    );
+}
+
+.sn-skeleton-card {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.sn-refresh-overlay {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.sn-refresh-overlay-text,
+.sn-refresh-overlay-subtext {
+    color: var(--color-text-dark);
+}
+
+.sn-section-loader {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+/* ========================================
+   EMPTY & ERROR STATES
+   ======================================== */
+
+.sn-empty-state-icon {
+    background: rgba(102, 126, 234, 0.15);
+    color: var(--color-text-dark-secondary);
+}
+
+.sn-empty-state-title {
+    color: var(--color-text-dark);
+}
+
+.sn-empty-state-description {
+    color: var(--color-text-dark-secondary);
+}
+
+.sn-error-state {
+    background: rgba(227, 76, 76, 0.08);
+    border-color: rgba(227, 76, 76, 0.25);
+}
+
+/* ========================================
+   TOAST NOTIFICATIONS
+   ======================================== */
+
+.sn-toast {
+    background: var(--color-bg-light-1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sn-toast-title {
+    color: var(--color-text-dark);
+}
+
+.sn-toast-message {
+    color: var(--color-text-dark-secondary);
+}
+
+.sn-toast-close {
+    color: var(--color-text-dark-secondary);
+}
+
+.sn-toast-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--color-text-dark);
+}
+
+/* ========================================
+   SCROLLBAR
+   ======================================== */
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-bg-light-3);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-start);
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-bg-light-1);
+}
+
+/* ========================================
+   STEAM ICON
+   ======================================== */
+
+#steamIcon {
+    color: var(--color-primary-start);
+}
+
+/* ========================================
+   BOOTSTRAP ICON OVERRIDES
+   ======================================== */
+
+.bi {
+    color: inherit;
+}
+
+/* ========================================
+   IDENTITY PAGES (2FA, etc)
+   ======================================== */
+
+.identity-container {
+    color: var(--color-text-dark);
+}
+
+.identity-card {
+    background: var(--color-bg-light-2);
+    border-color: var(--color-bg-light-3);
+}
+
+.identity-card h1,
+.identity-card h2,
+.identity-card h3,
+.identity-card h4 {
+    color: var(--color-text-dark);
+}
+
+.identity-card p,
+.identity-card label {
+    color: var(--color-text-dark);
+}
+
+.qr-code-container {
+    background: #ffffff;
+}
+
+/* ========================================
+   MISCELLANEOUS FIXES
+   ======================================== */
+
+/* Ensure dropdown menus are visible */
+.dropdown-menu {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+}
+
+.dropdown-item {
+    color: var(--color-text-dark);
+}
+
+.dropdown-item:hover {
+    background: var(--color-bg-light-2);
+    color: var(--color-text-dark);
+}
+
+/* Ensure popovers are visible */
+.popover {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+}
+
+.popover-header {
+    background: var(--color-bg-light-2);
+    color: var(--color-text-dark);
+}
+
+.popover-body {
+    color: var(--color-text-dark);
+}
+
+/* Tooltips */
+.tooltip-inner {
+    background: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+/* List groups */
+.list-group-item {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+    color: var(--color-text-dark);
+}
+
+/* Accordion */
+.accordion-item {
+    background: var(--color-bg-light-1);
+    border-color: var(--color-bg-light-3);
+}
+
+.accordion-button {
+    background: var(--color-bg-light-2);
+    color: var(--color-text-dark);
+}
+
+.accordion-button:not(.collapsed) {
+    background: var(--color-bg-light-2);
+    color: var(--color-primary-start);
+}
+
+.accordion-body {
+    background: var(--color-bg-light-1);
+    color: var(--color-text-dark);
+}
+
+/* Error text */
+.error h2 {
+    color: var(--color-text-dark-secondary);
+}
+
+/* Validation messages */
+.text-danger {
+    color: var(--color-accent-red);
+}
+
+.field-validation-error {
+    color: var(--color-accent-red);
+}
+
+/* ========================================
+   ANIMATION OVERRIDES FOR LIGHT MODE
+   ======================================== */
+
+.laser-engrave {
+    animation: laser-engrave-light 0.2s forwards;
+}
+
+@keyframes laser-engrave-light {
+    0% {
+        text-shadow: none;
+    }
+    100% {
+        text-shadow: 0 0 10px rgba(102, 126, 234, 0.5), 0 0 20px rgba(102, 126, 234, 0.3);
+    }
+}

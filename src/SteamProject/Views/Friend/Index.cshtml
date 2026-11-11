@@ -1,0 +1,121 @@
+
+@model SteamProject.ViewModels.FriendsVM
+
+@{
+    ViewData["Title"] = "Friend's Page";
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/FriendsIndex.css">
+</head>
+
+<br><br>
+<input type="hidden" id="SteamId" name="SteamId" value="@Model.SteamId">
+<input type="hidden" id="FriendSteamId" name="FriendSteamId" value="@Model.Friend.SteamId">
+<input type="hidden" id="Id" name="Id" value="@Model.Id">
+<input type="hidden" id="ClickedGame" name="ClickedGame" value="">
+
+
+<div class="text-center">
+    <img src="@Model.Friend.AvatarFullUrl" class="friend-avatar">
+    @if (Model.Friend.Nickname != null)
+    {
+        <h1 id="friendUsername"> @Model.Friend.Nickname </h1>
+    } else {
+        <h1 id="friendUsername"> @Model.Friend.SteamName </h1>
+    }
+    <h3 id="friendPageStatus"> </h3>
+    <i id="friendGameStatus"> </i>
+</div>
+
+@if( Model.SharedGames.Count() == 0 )
+{
+    <br>
+    <h1> It seems like this list is empty! A couple things could have happened:</h1>
+    <br>
+    <ul>
+        <li>
+            <h3> You and your friend have no games in common </h3>
+        </li>
+
+        <li>
+            <h3> Your friend's steam library is set to private </h3>
+        </li>
+
+        <li>
+            <h3> There was an error on our end. If this is the case, we are deeply sorry. </h3>
+            <i> We are working to make this application as bulletproof as possible!
+                If refreshing the page doesn't work, try again in a few minutes! </i>
+        </li>
+
+    </ul>
+}
+
+<div class="row friend-game-row">
+    @foreach (var game in Model.SharedGames)
+    {
+
+        <div class="col-md-4 friend-game-col">
+
+            <br>
+
+            <div class="friendDiv" id="@game.AppId" value="@game.Name">
+                <div class="card friendCard">
+                    <img class="card-img-top" src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/header.jpg", @game.AppId)" alt="@string.Format("{0}", @game.Name)">
+                    <div class="card-body">
+                        <p class="card-title">@game.Name</p>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+    }
+</div>
+
+<div id="compareModal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" id="compareModalHeader">
+                <button type="button" class="btn-close btn-close-white" id="modalCloser" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body modal-container">
+                <div class="loading-spinner" id="loading-spinner"></div>
+                <div class="row" id="informationRow" style="display:none;">
+                    <div class="col-md-4" id="gameImageCol">
+                        <div class="row">
+                            <img class="modal-img" id="gameImage">
+                        </div>
+                        <br>
+                        <div class="row">
+                            <button class="btn btn-secondary" id="competeBtn"> Want to Compete? </button>
+                        </div>
+                    </div>
+                    <div class="col-md-8" id="modal-right">
+                        <div class="row" id="ach-row">
+                            <div class="col-md-4" id="userAchievements">
+                                <i>Your achievements</i>
+                            </div>
+                            <div class="col-md-4" id="friendAchievements">
+                                <i>Their achievements</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="error">
+                    <h2 class="error-ach" id="error-ach">There are no achievements for this title.</h2>
+                    <h2 class="error-ser" id="error-ser">An error occurred while requesting info from Steam.</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script type="text/javascript" src="~/js/friendPage.js"></script>
+}

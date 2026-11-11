@@ -1,0 +1,43 @@
+@{
+    ViewData["Title"] = "Privacy";
+    ViewData["Description"] = "Privacy notice for SteamNexus, a university capstone web app: what it stores and why.";
+}
+
+<link rel="stylesheet" href="~/css/Privacy.css" asp-append-version="true" />
+
+<article class="privacy-notice">
+    <h1>Privacy notice</h1>
+
+    <p class="privacy-lead">
+        SteamNexus is a student project: a university capstone built by a four-person team and now
+        maintained as a portfolio piece. It is not a commercial service.
+    </p>
+
+    <h2>What it stores</h2>
+    <ul>
+        <li><strong>Your account:</strong> the email address you register with and a hashed password (ASP.NET Core Identity).</li>
+        <li><strong>Your Steam link:</strong> your Steam ID and the public profile details Steam returns for it (display name, avatar, profile URL, level).</li>
+        <li><strong>Your games:</strong> your owned games, playtime and achievements, and your Steam friends list, so the dashboard, library and competitions work.</li>
+        <li><strong>What you do here:</strong> competitions you create or join, votes, badges, inbox messages and your light/dark theme choice.</li>
+    </ul>
+
+    <h2>What it does not do</h2>
+    <ul>
+        <li>No marketing email, newsletters or advertising.</li>
+        <li>Your data is not sold or shared for anyone else's marketing.</li>
+        <li>The only email it sends is account email, such as confirming your address or resetting your password.</li>
+    </ul>
+
+    <h2>Services it relies on</h2>
+    <ul>
+        <li>The Steam Web API, to read your public Steam data.</li>
+        <li>OpenAI, to summarize public game news. Your account data is not sent.</li>
+        <li>Microsoft Azure, which hosts the site and its database and collects standard request telemetry (Application Insights).</li>
+    </ul>
+
+    <h2>Questions or removal</h2>
+    <p>
+        To ask a question or have your account and data removed, use the contact form at
+        <a class="privacy-link" href="https://portfolionexus.azurewebsites.net/Cole" target="_blank" rel="noopener">portfolionexus.azurewebsites.net/Cole</a>.
+    </p>
+</article>

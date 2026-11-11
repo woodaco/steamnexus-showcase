@@ -1,0 +1,28 @@
+{
+  "game": {
+    "gameName": "Counter-Strike 2",
+    "gameVersion": "1.0.0.0",
+    "availableGameStats": {
+      "achievements": [
+        {
+          "name": "WIN_PISTOLROUND",
+          "defaultvalue": 0,
+          "displayName": "Gunsmith",
+          "hidden": 0,
+          "description": "Win a pistol round",
+          "icon": "https://cdn.steamstatic.com/steamcommunity/public/images/inventory/winpistolround.png",
+          "icongray": "https://cdn.steamstatic.com/steamcommunity/public/images/inventory/winpistolround_gray.png"
+        },
+        {
+          "name": "WIN_BOMB_PLANT",
+          "defaultvalue": 0,
+          "displayName": "Explosive Expert",
+          "hidden": 0,
+          "description": "Win by planting a bomb",
+          "icon": "https://cdn.steamstatic.com/steamcommunity/public/images/inventory/winbombplant.png",
+          "icongray": "https://cdn.steamstatic.com/steamcommunity/public/images/inventory/winbombplant_gray.png"
+        }
+      ]
+    }
+  }
+}

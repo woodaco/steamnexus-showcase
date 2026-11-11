@@ -1,0 +1,199 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    ViewData["Title"] = "Home Page";
+    ViewData["Description"] = "SteamNexus links your Steam account to track achievements, browse your library and run achievement competitions with friends. A university capstone web app built with ASP.NET Core 8 MVC by a four-person team, later refactored solo by Cole Woodard.";
+}
+
+<link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" type="text/css">
+
+<div class="landing">
+    <section class="land-hero" aria-labelledby="land-title">
+        <p class="land-eyebrow">University capstone &middot; four-person team &middot; ASP.NET Core 8 MVC</p>
+        <h1 id="land-title" class="land-title">SteamNexus: track your Steam achievements and race your friends for them</h1>
+        <p class="land-lede">
+            SteamNexus links a Steam account to show your library, achievements and friends in one place,
+            and lets you start achievement competitions with those friends. It began as a university capstone
+            built by a four-person team, and was later refactored solo by Cole Woodard.
+        </p>
+        <div class="land-actions">
+            @if (!User.Identity?.IsAuthenticated ?? true)
+            {
+                <a class="land-btn land-btn-primary register-link" asp-area="Identity" asp-page="/Account/Register">Sign up and link Steam</a>
+                @if (SteamProject.Demo.DemoMode.IsEnabled(Configuration))
+                {
+                    @* Signs in a fictional, read-only persona; no Steam account needed. *@
+                    <form method="post" asp-area="" asp-controller="Demo" asp-action="Enter" class="land-demo-form">
+                        <button type="submit" id="try-demo" class="land-btn land-btn-secondary"
+                                title="Browse as a fictional, read-only persona. No sign-up or Steam account needed.">Try the demo</button>
+                    </form>
+                }
+            }
+            else
+            {
+                <a class="land-btn land-btn-primary" asp-area="" asp-controller="Home" asp-action="Dashboard">Go to your dashboard</a>
+            }
+            <a class="land-btn land-btn-secondary" href="#screenshots">See screenshots</a>
+            <a class="land-btn land-btn-secondary" href="#my-role">Cole's role</a>
+        </div>
+    </section>
+
+    <section class="land-section" aria-labelledby="features-title">
+        <h2 id="features-title" class="land-h2">What it does</h2>
+        <ul class="feature-cards">
+            <li class="feature-card">
+                <span class="feature-card-icon" aria-hidden="true"><i class="bi bi-trophy"></i></span>
+                <h3 class="feature-card-title">Compete</h3>
+                <p class="feature-card-text">Start an achievement race in a game you and a friend both own, with a live countdown and a leaderboard.</p>
+            </li>
+            <li class="feature-card">
+                <span class="feature-card-icon" aria-hidden="true"><i class="bi bi-controller"></i></span>
+                <h3 class="feature-card-title">Library</h3>
+                <p class="feature-card-text">Your Steam library, playtime, achievements and friends list pulled into one dashboard.</p>
+            </li>
+            <li class="feature-card">
+                <span class="feature-card-icon" aria-hidden="true"><i class="bi bi-newspaper"></i></span>
+                <h3 class="feature-card-title">News</h3>
+                <p class="feature-card-text">Steam news for the games you follow, summarised by the OpenAI API and cached server-side.</p>
+            </li>
+            <li class="feature-card">
+                <span class="feature-card-icon" aria-hidden="true"><i class="bi bi-stars"></i></span>
+                <h3 class="feature-card-title">Badges and recommendations</h3>
+                <p class="feature-card-text">Badges awarded for milestones such as linking Steam, plus game recommendations from the genres you play.</p>
+            </li>
+        </ul>
+    </section>
+
+    <section id="screenshots" class="land-section" aria-labelledby="screenshots-title">
+        <h2 id="screenshots-title" class="land-h2">Screenshots</h2>
+        <p class="land-note">
+            Captured from a local run of this code against a throwaway database. Every player in them
+            (DemoPlayer, PixelRival, NovaQuest and the DemoFriend accounts) is fictional seed data, and so
+            are the achievement names, trophy icons and scores. Game titles and cover art come from the public
+            Steam catalogue.
+        </p>
+        <div class="shot-grid">
+            <figure class="shot">
+                <a class="shot-link" href="~/assets/showcase/dashboard-races.jpg" target="_blank" rel="noopener">
+                    <img src="~/assets/showcase/dashboard-races.jpg" width="1180" height="740" loading="lazy" decoding="async"
+                     alt="SteamNexus dashboard, Your Race Results section: a running competition in America's Army: Proving Grounds created by DemoPlayer, with a days, hours, minutes and seconds countdown, and a finished competition card below it.">
+                    <span class="visually-hidden">(opens the full-size image in a new tab)</span>
+                </a>
+                <figcaption>Dashboard: running and finished competitions, with a live countdown.</figcaption>
+            </figure>
+            <figure class="shot">
+                <a class="shot-link" href="~/assets/showcase/compete-details.jpg" target="_blank" rel="noopener">
+                    <img src="~/assets/showcase/compete-details.jpg" width="1280" height="800" loading="lazy" decoding="async"
+                     alt="SteamNexus competition details page: the game's banner, the achievements being raced for (First Deployment, Squad Leader, Marksman and more), competitor cards for DemoPlayer and PixelRival, and a leaderboard with DemoPlayer on 40 points and PixelRival on 25.">
+                    <span class="visually-hidden">(opens the full-size image in a new tab)</span>
+                </a>
+                <figcaption>Competition details: the achievements in play and the leaderboard.</figcaption>
+            </figure>
+            <figure class="shot">
+                <a class="shot-link" href="~/assets/showcase/friends.jpg" target="_blank" rel="noopener">
+                    <img src="~/assets/showcase/friends.jpg" width="1280" height="800" loading="lazy" decoding="async"
+                     alt="SteamNexus friends page: a search box and cards for the fictional friends PixelRival, NovaQuest and DemoFriend2, each with compare-games, block and remove buttons.">
+                    <span class="visually-hidden">(opens the full-size image in a new tab)</span>
+                </a>
+                <figcaption>Friends: linked friends, with search, game comparison, block and remove.</figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <section id="my-role" class="land-section" aria-labelledby="my-role-title">
+        <h2 id="my-role-title" class="land-h2">My role <span class="draft-tag">draft, to be confirmed</span></h2>
+        <p class="land-note">
+            SteamNexus was a four-person university capstone; teammates are credited by name once they agree to it.
+            The areas below are drawn from Cole Woodard's commits and are awaiting his confirmation.
+        </p>
+        <div class="role-grid">
+            <div class="role-card">
+                <h3 class="role-title">During the capstone (team, 2023)</h3>
+                <ul class="role-list">
+                    <li>The user dashboard: recently played and followed game carousels, and current and previous competitions with a countdown.</li>
+                    <li>AI-summarised game news: the OpenAI service, Steam news retrieval and the news pages.</li>
+                    <li>The badge system: badge tables, seeding badges from JSON, the award logic and the badge pop-up.</li>
+                    <li>The light/dark theme switcher, including its request middleware.</li>
+                    <li>Competition status and voting tables.</li>
+                    <li>SpecFlow + Selenium BDD tests (dashboard, linking and unlinking Steam, badges) and NUnit repository tests.</li>
+                </ul>
+            </div>
+            <div class="role-card">
+                <h3 class="role-title">After graduation (solo refactor)</h3>
+                <ul class="role-list">
+                    <li>A security pass: CSRF, IDOR and XSS fixes, and an atomic admin ban.</li>
+                    <li>Polly retries with backoff (including HTTP 429) on the Steam HTTP client, and a server-side cache for OpenAI summaries.</li>
+                    <li>Null-safe Steam API parsing, covered by NUnit tests with fake HTTP handlers; test projects moved to NUnit 4.</li>
+                    <li>Migrations and seeding moved off the startup path into a background service, so the site starts listening in seconds.</li>
+                    <li>Separate live and ready health checks, an anonymous build status page, and this public landing page.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="built-with" class="land-section" aria-labelledby="built-with-title">
+        <h2 id="built-with-title" class="land-h2">Built with</h2>
+        <dl class="stack">
+            <div class="stack-row">
+                <dt>Back end</dt>
+                <dd>
+                    <ul class="chips">
+                        <li>C# / .NET 8</li>
+                        <li>ASP.NET Core 8 MVC</li>
+                        <li>Entity Framework Core 8</li>
+                        <li>SQL Server</li>
+                        <li>ASP.NET Core Identity</li>
+                        <li>Steam OpenID sign-in</li>
+                        <li>Steam Web API</li>
+                        <li>OpenAI API</li>
+                        <li>Polly</li>
+                        <li>SendGrid</li>
+                    </ul>
+                </dd>
+            </div>
+            <div class="stack-row">
+                <dt>Front end</dt>
+                <dd>
+                    <ul class="chips">
+                        <li>Razor views</li>
+                        <li>Bootstrap 5</li>
+                        <li>jQuery</li>
+                        <li>JavaScript</li>
+                    </ul>
+                </dd>
+            </div>
+            <div class="stack-row">
+                <dt>Testing</dt>
+                <dd>
+                    <ul class="chips">
+                        <li>NUnit</li>
+                        <li>Moq</li>
+                        <li>SpecFlow</li>
+                        <li>Selenium</li>
+                        <li>Playwright</li>
+                        <li>Jest</li>
+                    </ul>
+                </dd>
+            </div>
+            <div class="stack-row">
+                <dt>Hosting and CI</dt>
+                <dd>
+                    <ul class="chips">
+                        <li>Azure App Service</li>
+                        <li>Application Insights</li>
+                        <li>GitHub Actions</li>
+                    </ul>
+                </dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="land-section land-footer-note" aria-label="Source and contact">
+        <p class="source-note">
+            <i class="bi bi-github" aria-hidden="true"></i>
+            <a href="https://github.com/woodaco/steamnexus-showcase" target="_blank" rel="noopener">Source on GitHub</a>
+        </p>
+        <p class="land-contact">
+            Questions about the project? <a href="https://portfolionexus.azurewebsites.net/Cole" target="_blank" rel="noopener">Contact Cole Woodard</a>
+        </p>
+    </section>
+</div>

@@ -1,0 +1,53 @@
+@model IEnumerable<SteamProject.ViewModels.AdminUsersVM>
+@{
+    ViewData["Title"] = "Admin - Site Users";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/Admin.css" asp-append-version="true">
+</head>
+<div class="container admin-container">
+    <main role="main" class="pb-3">
+        <div class="admin-header">
+            <h1>Site-wide User List</h1>
+            <h2>Manage Users</h2>
+        </div>
+        <hr>
+        <div class="row">
+            @Html.Partial("AdminNavigation")
+            <div class="col-md-9">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.AspNetUserId)</th>
+                            <th>@Html.DisplayNameFor(model => model.Email)</th>
+                            <th>@Html.DisplayNameFor(model => model.SteamName)</th>
+                            <th>@Html.DisplayNameFor(model => model.SteamId)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var user in Model)
+                        {
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => user.AspNetUserId)</td>
+                                <td>@Html.DisplayFor(modelItem => user.Email)</td>
+                                <td>@Html.DisplayFor(modelItem => user.SteamName)</td>
+                                <td>@Html.DisplayFor(modelItem => user.SteamId)</td>
+                                <td>
+                                    @if(user.SteamId != null)
+                                    {
+                                        <form asp-action="Delete" asp-route-id="@user.SteamId" method="post"
+                                              style="display:inline"
+                                              onsubmit="return confirm('Ban this user? This removes their Steam link and deletes their games/friends.');">
+                                            <button type="submit" class="admin-action-link danger">Ban</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>

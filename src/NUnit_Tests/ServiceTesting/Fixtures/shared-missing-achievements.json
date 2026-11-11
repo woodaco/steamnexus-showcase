@@ -1,0 +1,29 @@
+{
+  "playerstats": {
+    "steamID": "76561198000000001",
+    "gameName": "Counter-Strike 2",
+    "achievements": [
+      {
+        "apiname": "WIN_PISTOLROUND",
+        "achieved": 0,
+        "unlocktime": 0,
+        "name": "Pistol Round Winner",
+        "description": "Win a pistol round."
+      },
+      {
+        "apiname": "BOMB_DEFUSE_CLOSE_CALL",
+        "achieved": 0,
+        "unlocktime": 0,
+        "name": "Defuse Close Call",
+        "description": "Defuse a bomb with less than one second remaining."
+      },
+      {
+        "apiname": "WIN_KNIFE_FIGHT",
+        "achieved": 1,
+        "unlocktime": 1704067200,
+        "name": "Knife Fight Winner",
+        "description": "Win a knife fight."
+      }
+    ]
+  }
+}

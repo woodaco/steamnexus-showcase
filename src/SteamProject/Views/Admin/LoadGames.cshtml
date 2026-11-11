@@ -1,0 +1,60 @@
+@model List<Game>
+@{
+    ViewData["Title"] = "Admin - Load Games";
+    var gamesList = Model;
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/Admin.css" asp-append-version="true">
+</head>
+<div class="container admin-container">
+    <main role="main" class="pb-3">
+        <div class="admin-header">
+            <h1>Load Bulk Games List</h1>
+            <h2>Pre-load games into the database</h2>
+        </div>
+        <hr>
+        <div class="row">
+            @Html.Partial("AdminNavigation")
+            <div class="col-md-9">
+                @{ bool curatorConfigured = ViewBag.CuratorConfigured == null || (bool)ViewBag.CuratorConfigured; }
+                @if(!curatorConfigured)
+                {
+                    <div class="alert alert-warning" role="alert" id="curator-misconfig">
+                        <h3 class="admin-card-title">Curator account not configured</h3>
+                        <p class="admin-card-content">No games could be loaded — the curator Steam id and/or admin
+                        API key are not set in configuration (<code>Steam:CuratorSteamId</code> + <code>AdminSeedingApiKey</code>).
+                        Configure them to bulk-load the curator's game list. (This is distinct from "all games already loaded".)</p>
+                    </div>
+                }
+                else if(gamesList.Count() == 0)
+                {
+                    <div class="admin-card">
+                        <h3 class="admin-card-title">All Games Loaded</h3>
+                        <p class="admin-card-content">All of the games for the bulk loading account are already in the database.</p>
+                    </div>
+                }
+                else
+                {
+                    <h3>Games Added</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Steam App Id</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(var game in gamesList)
+                            {
+                                <tr>
+                                    <td>@game.Name</td>
+                                    <td>@game.AppId</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </main>
+</div>

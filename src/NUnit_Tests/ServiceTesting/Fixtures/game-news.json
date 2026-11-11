@@ -1,0 +1,53 @@
+{
+  "appnews": {
+    "appid": 730,
+    "newsitems": [
+      {
+        "gid": "5892467182736921600",
+        "title": "Counter-Strike 2 Winter Update",
+        "url": "https://store.steampowered.com/news/app/730/view/5892467182736921600",
+        "external_url": "https://blog.counter-strike.net/index.php/2024/01/winter-update/",
+        "publish_date": 1704067200,
+        "feedlabel": "Counter-Strike: Updates",
+        "category": "updates",
+        "tags": [
+          "update"
+        ],
+        "description": "The Winter Update brings new operations, maps, and weapons to Counter-Strike 2.",
+        "feedname": "cs_updates",
+        "comments": 1543
+      },
+      {
+        "gid": "5892467182736921601",
+        "title": "CS2 Major Championship",
+        "url": "https://store.steampowered.com/news/app/730/view/5892467182736921601",
+        "external_url": "https://blog.counter-strike.net/index.php/2024/01/major/",
+        "publish_date": 1704153600,
+        "feedlabel": "Counter-Strike: Updates",
+        "category": "esports",
+        "tags": [
+          "esports"
+        ],
+        "description": "The biggest CS2 tournament of the year kicks off this weekend.",
+        "feedname": "cs_updates",
+        "comments": 892
+      },
+      {
+        "gid": "5892467182736921602",
+        "title": "SteamDb Maintenance Notice",
+        "url": "https://store.steampowered.com/news/app/730/view/5892467182736921602",
+        "external_url": "https://steamdb.info/",
+        "publish_date": 1704240000,
+        "feedlabel": "SteamDb",
+        "category": "maintenance",
+        "tags": [
+          "maintenance"
+        ],
+        "description": "Scheduled maintenance window for SteamDB.",
+        "feedname": "steamdb",
+        "comments": 45
+      }
+    ],
+    "count": 3
+  }
+}

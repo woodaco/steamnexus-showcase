@@ -1,0 +1,30 @@
+{
+  "playerstats": {
+    "steamID": "76561198000000001",
+    "gameName": "Counter-Strike 2",
+    "achievements": [
+      {
+        "apiname": "WIN_PISTOLROUND",
+        "achieved": 1,
+        "unlocktime": 1697000000,
+        "name": "Gunsmith",
+        "description": "Win a pistol round"
+      },
+      {
+        "apiname": "WIN_BOMB_PLANT",
+        "achieved": 1,
+        "unlocktime": 1697000100,
+        "name": "Explosive Expert",
+        "description": "Win by planting a bomb"
+      },
+      {
+        "apiname": "KILL_ENEMY_DEAGLE",
+        "achieved": 0,
+        "unlocktime": 0,
+        "name": "Desert Eagle Expert",
+        "description": "Kill 200 enemies with the Desert Eagle"
+      }
+    ],
+    "success": true
+  }
+}

@@ -1,0 +1,659 @@
+{
+  "summary": "Independent read-only re-audit of every TeamPlus feature domain to ground-truth production readiness",
+  "agentCount": 10,
+  "logs": [
+    "Audit batch 1: auth, library, compete",
+    "Audit batch 2: friends, inbox, news",
+    "Audit batch 3: badges, admin, steam",
+    "Audit batch 4: crosscut"
+  ],
+  "result": [
+    {
+      "feature": "Auth/Identity/Registration",
+      "verdict": "works-with-gaps",
+      "summary": "The core password auth flow is genuinely wired end-to-end and is better than the \"assume bad\" prior would suggest. Registration is now atomic across both DbContexts: Register.cshtml.cs (lines 138-149) creates the domain User row and, on failure, compensates by deleting the IdentityUser. PasswordSignInAsync, unconfirmed-email detection (result.IsNotAllowed -> distinct actionable message, Login.cshtml.cs:132-138), and the SendGrid EmailSender are all real, not stubs. The missing ConfirmEmail/RegisterConfirmation/ResendEmailConfirmation/ForgotPassword/Lockout/ExternalLogin/AccessDenied .cshtml files are NOT 404s — Microsoft.AspNetCore.Identity.UI 8.0.0 is referenced and AddDefaultIdentity wires the Default UI Razor Class Library, which ships those pages; the project only scaffolds overrides for Login/Register/Logout/2fa/Manage. The real gaps: (1) the \"Sign in with Steam\" button on the Login page goes through the Default UI ExternalLogin page, which creates an IdentityUser but never creates the SteamInfoDbContext domain User row, so a Steam-first signup is non-atomic and lands the user in a state where Library/Friends/Compete will NRE; (2) cookie hardening for the Steam correlation cookie uses SameSite=None + Secure=Always which breaks the Steam button under local http dev; (3) the confirmation email body is just a raw encoded URL with no anchor/markup; (4) the domain User lookup after Steam linking is a full-table GetAll().FirstOrDefault scan.",
+      "gaps": [
+        {
+          "title": "Steam-first login creates IdentityUser but no domain User row (non-atomic external registration)",
+          "severity": "P1",
+          "file": "src/SteamProject/Areas/Identity/Pages/Account/Login.cshtml:56",
+          "detail": "The Login page external-login form posts to the Default UI ExternalLogin page (./ExternalLogin), whose OnGetCallbackAsync creates a brand-new IdentityUser via _userManager.CreateAsync for a first-time Steam user but has no knowledge of SteamInfoDbContext. Only the scaffolded Register.cshtml.cs creates the paired Models.User row (AspNetUserId). A user who 'Signs in with Steam' as their very first interaction gets an Identity account with NO domain User row. Controllers like FriendController/LibraryController/CompeteController do _userRepo...FirstOrDefault(u=>u.AspNetUserId==id) and dereference, producing NREs/500s. The atomicity fix that exists in Register.cshtml.cs is absent on this path.",
+          "fix": "Scaffold the ExternalLogin page into Areas/Identity/Pages/Account (dotnet aspnet-codegenerator identity --files Account.ExternalLogin) and, in OnGetCallbackAsync after a successful _userManager.CreateAsync, create the Models.User { AspNetUserId = user.Id } in SteamInfoDbContext with the same try/catch-and-DeleteAsync compensation used in Register.cshtml.cs:138-149; also store the Steam providerKey-derived SteamId there. Alternatively introduce an IUserProvisioningService called by BOTH Register and ExternalLogin so the domain row is always created exactly once."
+        },
+        {
+          "title": "Steam correlation cookie SameSite=None+Secure=Always breaks 'Sign in with Steam' in local http dev",
+          "severity": "P2",
+          "file": "src/SteamProject/Program.cs:118",
+          "detail": "AddSteam sets CorrelationCookie.SameSite = SameSiteMode.None and SecurePolicy = CookieSecurePolicy.Always. SameSite=None cookies are dropped by browsers unless Secure, and Secure cookies are dropped over plain http. The app's UseHttpsRedirection mitigates this in practice, but the rest of the auth stack deliberately uses CookieSecurePolicy.SameAsRequest (line 104) to keep local http dev working, so this is inconsistent and the Steam OpenID round-trip correlation will silently fail (login appears to do nothing) if the callback ever lands on http.",
+          "fix": "Make the correlation cookie policy environment-aware: in Development set SecurePolicy = CookieSecurePolicy.SameAsRequest (and SameSite = Lax or Unspecified), in Production keep None+Always. Read builder.Environment.IsDevelopment() when configuring AddSteam, mirroring the ConfigureApplicationCookie SameAsRequest choice."
+        },
+        {
+          "title": "Confirmation email body is a bare URL with no clickable link / template fallback",
+          "severity": "P3",
+          "file": "src/SteamProject/Areas/Identity/Pages/Account/Register.cshtml.cs:162",
+          "detail": "SendEmailAsync is called with htmlMessage = $\"{HtmlEncoder.Default.Encode(callbackUrl)}\" — just the encoded URL as both PlainText and Html content. If SendGrid:ConfirmTemplateId is configured the URL is passed as template data (OK), but if it is NOT configured (the documented fallback path in EmailSender.cs:56-61), the recipient receives an email whose entire body is a raw URL string with no anchor tag and no instructions, which many mail clients won't linkify. The standard scaffold wraps it as 'Please confirm your account by <a href=...>clicking here</a>.'",
+          "fix": "In Register.cshtml.cs build a proper HTML body: $\"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.\" so the non-template SendGrid path produces a usable email; keep passing the URL via template data for the template path."
+        },
+        {
+          "title": "Full-table scan to resolve domain user during Steam link callback",
+          "severity": "P3",
+          "file": "src/SteamProject/Areas/Identity/Pages/Account/Manage/ExternalLogins.cshtml.cs:206",
+          "detail": "OnGetLinkLoginCallbackAsync does _userRepo.GetAll().Where(u => u.AspNetUserId == userId).FirstOrDefault(), and OnPostRemoveLoginAsync at line 124 does the same GetAll().FirstOrDefault. GetAll() materializes/queries the whole Users table to find one row by AspNetUserId (an indexed-by-intent column). This is a per-login full scan and grows with user count.",
+          "fix": "Add a repository method like IUserRepository.GetUserByAspNetId(string aspNetUserId) that issues a single WHERE AspNetUserId == id query (and ensure a DB index on AspNetUserId via migration), then use it here and in the other AspNetUserId lookups instead of GetAll()."
+        }
+      ],
+      "deadOrFake": [
+        "src/SteamProject/Areas/Identity/Pages/Account/Register.cshtml.cs:176-180 — the else branch (RequireConfirmedAccount false -> SignInAsync + LocalRedirect) is dead code: RequireConfirmedAccount is hardcoded true in Program.cs:94, so registration ALWAYS redirects to RegisterConfirmation. Not harmful, but never executes.",
+        "src/SteamProject/Areas/Identity/Pages/Account/Manage/ExternalLogins.cshtml.cs:214-217 — catch (DbUpdateConcurrencyException) { throw; } is a no-op catch that only rethrows; it adds nothing and just obscures the call.",
+        "src/SteamProject/Areas/Identity/Pages/Account/Manage/ExternalLogins.cshtml.cs:194-197 — on blacklist hit it sets info.ProviderKey/ProviderDisplayName = \"\" then returns, but info is a local AddLoginAsync result already persisted at line 176; mutating these strings does nothing (the login was already added to the user). The banned Steam account is left linked at the Identity level even though SteamId is not written to the domain row."
+      ],
+      "completionTasks": [
+        "Scaffold Areas/Identity/Pages/Account/ExternalLogin.cshtml(.cs) so the Steam-first login path is owned by the app, and inject SteamInfoDbContext to create the paired Models.User row with the same compensation pattern as Register.cshtml.cs:138-149 (or extract a shared IUserProvisioningService used by both Register and ExternalLogin).",
+        "Make the AddSteam CorrelationCookie SecurePolicy/SameSite environment-aware in Program.cs:118-122 so local http dev works and production stays strict.",
+        "Fix the blacklist-hit path in ExternalLogins.cshtml.cs:192-198 to actually call _userManager.RemoveLoginAsync for the just-added banned Steam login (and not leave it linked) before returning the banned message.",
+        "Add IUserRepository.GetUserByAspNetId(string) backed by a single indexed query and replace GetAll().FirstOrDefault(u=>u.AspNetUserId==...) usages in ExternalLogins.cshtml.cs (lines 124, 206) and elsewhere; add a migration creating an index on User.AspNetUserId.",
+        "Build a proper HTML confirmation email body (anchor + instructions) in Register.cshtml.cs:162 for the non-template SendGrid fallback.",
+        "Remove the dead else branch in Register.cshtml.cs:176-180 and the no-op catch in ExternalLogins.cshtml.cs:214-217, or replace the catch with real conflict handling (e.g. surface a 'try again' message).",
+        "Verify at runtime that the Default UI pages (ConfirmEmail, RegisterConfirmation, ResendEmailConfirmation, ForgotPassword, Lockout, AccessDenied) actually resolve under /Identity/Account/* and that the confirmation link round-trips end-to-end; add an E2E test covering register->confirm->login and unconfirmed-login->resend."
+      ]
+    },
+    {
+      "feature": "Library (owned games list, hide/unhide, follow/unfollow, recommendations, more-info)",
+      "verdict": "works-with-gaps",
+      "summary": "The core Library capabilities are genuinely wired end-to-end and the prior session's claims about hide/follow are largely TRUE: the mutation endpoints (hide/unhide/follow/unfollow) live on SteamController, are guarded by [Authorize] + [AutoValidateAntiforgeryToken], derive the owner from the authenticated user (GetCurrentUser -> _userRepository.GetUser), verify per-row ownership (OwnerId == user.Id), and the JS only mutates the DOM on a 2xx (success callbacks, no lying). The antiforgery token is attached globally via $.ajaxSetup in site.js, so the AJAX calls satisfy the validator. However there are real gaps: (1) ShowMoreInfo has a genuine IDOR/cross-user data leak — it fetches UserGameInfo by GameId only, with NO owner filter, so the playtime shown is an arbitrary user's. (2) Recommendations is exactly the unbounded full-table scan the task warned about: _gameRepository.GetAll().ToList() loads the entire Games table into memory and builds a Dictionary<Game,int> per row. (3) ShowMoreInfo has no [Authorize] and NREs (500) on anonymous access and on unknown appId. (4) Index's refresh loop is an N+1 / catch-all-throw minefield and there is no user-initiated \"set nickname / revert nickname\" for games (SetNickname/RevertNickname are friend nicknames, not game nicknames — the feature description's game-nickname capability does not exist). The \"nickname\" capability for the Library is effectively absent.",
+      "gaps": [
+        {
+          "title": "ShowMoreInfo leaks another user's playtime (IDOR / missing ownership filter)",
+          "severity": "P1",
+          "file": "src/SteamProject/Controllers/LibraryController.cs:328",
+          "detail": "gameVM._userGame = _userGameInfoRepository.GetAll(g => g.GameId == game.Id).FirstOrDefault() returns the FIRST UserGameInfo row for that game across ALL users — there is no OwnerId filter. The displayed playtime (line 332) therefore belongs to whichever user happens to be first in the table, not the current user. Any authenticated user sees a stranger's playtime for a shared game.",
+          "fix": "Resolve the current user first and scope the query: var user = _userRepository.GetUser(_userManager.GetUserId(User)); if (user is null) return Challenge(); ... gameVM._userGame = _userGameInfoRepository.GetUserInfoForGame(appId, user.Id); (that repo method already filters by OwnerId). Guard null game (return NotFound) before calling GetGameInfoAsync."
+        },
+        {
+          "title": "Recommendations is an unbounded full-table scan scored in application memory",
+          "severity": "P1",
+          "file": "src/SteamProject/Controllers/LibraryController.cs:410",
+          "detail": "foreach(var game in _gameRepository.GetAll().ToList()) materializes the ENTIRE Games table, then allocates a one-entry Dictionary<Game,int> per non-owned game (line 414), then re-iterates every dictionary to score (line 422), then OrderByDescending over all of them (line 454) — only to Take(9) in the view (Recommendations.cshtml:59). Also line 379 _gameRepository.FindById per owned game is an N+1. This grows linearly with the global catalog and will OOM/time out as the games table grows.",
+          "fix": "Push scoring server-side or at least bound the scan: build genreScores/categoryScores from the user's games (already done), then query candidates with a Where excluding owned AppIds and (ideally) only games sharing at least one of the user's genres, e.g. _gameRepository.GetAll().Where(g => !userGameIds.Contains(g.AppId) && g.Genres != null).Take(N). Replace the List<Dictionary<Game,int>> with List<(Game,int)> or an anonymous projection, score, OrderByDescending(...).Take(9). Replace the per-game FindById loop with a single GetAll().Where(g => ownedIds.Contains(g.Id)) batch."
+        },
+        {
+          "title": "ShowMoreInfo has no [Authorize] and NREs (500) on anonymous user or unknown appId",
+          "severity": "P2",
+          "file": "src/SteamProject/Controllers/LibraryController.cs:318",
+          "detail": "Unlike Index ([Authorize] at line 39), ShowMoreInfo (318) and Recommendations (346) carry no [Authorize]. For an anonymous user GetUserId returns null, GetUser(null) returns null user, and GetGameByAppId(appId) for an invalid appId returns null Game; that null is passed straight into _steamService.GetGameInfoAsync(game) (line 324) -> NullReferenceException / 500. cleanRequirements/cleanDescriptions (339-340) also assume a populated gameVM.",
+          "fix": "Add [Authorize] to both actions. In ShowMoreInfo: var game = _gameRepository.GetGameByAppId(appId); if (game is null) return NotFound(); before the Steam call. Resolve user and null-check before use."
+        },
+        {
+          "title": "No game-nickname / revert-nickname capability exists for the Library",
+          "severity": "P2",
+          "file": "src/SteamProject/Controllers/SteamController.cs:245",
+          "detail": "The feature spec lists set/revert nickname for library games. The only SetNickname/RevertNickname endpoints (245, 259) operate on Friend.Nickname keyed by friendSteamId — friends, not owned games. There is no controller action, no JS, and no UI button in Views/Library/Index.cshtml to set a per-game nickname, and UserGameInfo has no Nickname column. This capability is entirely unimplemented for the Library.",
+          "fix": "If game nicknames are in scope: add a Nickname string? column to UserGameInfo (+ migration), add [HttpPost(\"setGameNickname\")]/[HttpPost(\"revertGameNickname\")] actions that resolve the owned UserGameInfo via GetUserInfoForGame(appId, user.Id), and add the input/button + AJAX in Index.cshtml/libraryPage.js. If out of scope, remove it from the feature contract."
+        },
+        {
+          "title": "Index refresh loop converts any DB hiccup into a hard 500 and swallows all Steam errors silently",
+          "severity": "P2",
+          "file": "src/SteamProject/Controllers/LibraryController.cs:247",
+          "detail": "The per-game try wraps the whole save block and on ANY exception does throw new Exception(\"Current game couldn't be saved...\") (247-250) — one transient EF failure aborts the entire library refresh with an unhandled 500 (the JS refreshLibrary error handler then just toasts a generic failure). Meanwhile the inner Steam-API try/catch blocks (129-132, 181-184) are empty silent catches, so genre/category enrichment failures are invisible. Game.Genres is then set to the magic string 'The genres couldn't be grabbed' (136,188) which leaks into the genre filter logic unless string-matched out.",
+          "fix": "Replace the empty catches with ILogger.LogWarning and continue. Replace the rethrow at 247 with per-game logging + continue so one bad game doesn't fail the whole refresh. Stop persisting the 'The genres couldn't be grabbed' sentinel into the Genres column (use null and handle in the view) to avoid it polluting filters."
+        },
+        {
+          "title": "N+1 lazy-loading on the Library grid via UserGameInfos.Game",
+          "severity": "P3",
+          "file": "src/SteamProject/DAL/Concrete/UserRepository.cs:18",
+          "detail": "Index uses the GetUser overload (18) which does NOT Include(UserGameInfos); the view iterates Model._user.UserGameInfos (Index.cshtml:103) and accesses game.Game.Name/AppId. Because UseLazyLoadingProxies is enabled (Program.cs:42) this works but fires one query to lazy-load the UserGameInfos collection and one query per game for the Game navigation (line 314 OrderBy(g => g.Game.Name) and the render loop). For a large library this is dozens-to-hundreds of round trips.",
+          "fix": "Have Index call a repository method that eager-loads: _ctx.Users.Include(u => u.UserGameInfos).ThenInclude(ugi => ugi.Game).FirstOrDefault(...), or use GetGamesListByUserInfo (already loaded) consistently and project the view off _games instead of re-walking the lazy UserGameInfos navigation."
+        },
+        {
+          "title": "Dead/duplicated id attributes on hide/follow buttons",
+          "severity": "P3",
+          "file": "src/SteamProject/Views/Library/Index.cshtml:123",
+          "detail": "The hide/follow buttons carry name=@game.Game.AppId / name=@game.Game.Id (123,126,139,142) but the JS never reads the button — setHiddenGame/setFollowedGame read the parent .gameContainer div's name/value attributes. These per-button name attributes are dead markup and the AppId-vs-Id inconsistency between branches is confusing maintenance debt (it currently happens to be harmless only because nothing reads them).",
+          "fix": "Remove the unused name attributes from the buttons; keep the single source of truth on the .gameContainer div (value=AppId for follow, name=Game.Id for hide) and document which the endpoints expect."
+        }
+      ],
+      "deadOrFake": [
+        "src/SteamProject/Controllers/LibraryController.cs:47 — `if (refresh == null)` on a non-nullable bool: dead branch, always false (compiler-wise refresh is bool, never null).",
+        "src/SteamProject/Controllers/LibraryController.cs:129-132 and 181-184 — empty silent catch blocks ('// Steam API failed') swallow all enrichment errors.",
+        "src/SteamProject/Controllers/LibraryController.cs:136,188 — hardcoded magic sentinel 'The genres couldn't be grabbed' persisted into Game.Genres.",
+        "src/SteamProject/Views/Library/Index.cshtml:123,126,139,142 — dead `name=` attributes on hide/follow buttons never read by JS.",
+        "src/SteamProject/Controllers/SteamController.cs:245,259 — SetNickname/RevertNickname are friend-nickname endpoints mislabeled against a Library 'set/revert nickname' requirement that has no game-level implementation.",
+        "src/SteamProject/wwwroot/js/followGame.js:27 — unfollowGame(gameName) declared with one param but followGame.js wiring for unfollow path (setUnfollowGame) is not referenced by any Library view button (only follow toggle is rendered in Index.cshtml), so the unfollow UI path is effectively unreachable from the Library page."
+      ],
+      "completionTasks": [
+        "Add an OwnerId filter to ShowMoreInfo's UserGameInfo lookup (use GetUserInfoForGame(appId, user.Id)) to close the cross-user playtime IDOR, and null-guard the Game before the Steam call.",
+        "Rewrite Recommendations to exclude owned AppIds and (optionally) genre-prefilter in the EF Where, project to a lightweight (Game,int) list instead of List<Dictionary<Game,int>>, score, OrderByDescending, Take(9); replace the per-owned-game FindById N+1 with a single batched query.",
+        "Add [Authorize] to ShowMoreInfo and Recommendations.",
+        "Decide on game-nickname scope: either implement UserGameInfo.Nickname (+ migration, endpoints, UI, JS) or remove the requirement from the Library feature contract.",
+        "Make the Index refresh loop resilient: log+continue on per-game failures instead of rethrowing a 500, replace empty Steam catches with logging, and stop persisting the 'genres couldn't be grabbed' sentinel into the DB.",
+        "Eager-load UserGameInfos.Game for the Library grid (Include/ThenInclude) to kill the N+1 lazy loads, or render from _games consistently.",
+        "Clean up dead button name attributes and unreachable unfollow JS path; document the AppId-vs-GameId contract for hide vs follow endpoints."
+      ]
+    },
+    {
+      "feature": "Compete (competitions/duels/voting)",
+      "verdict": "works-with-gaps",
+      "summary": "The core \"Free-For-All / Duel competition\" path genuinely works end-to-end: Create GET loads friends, shared/owned games and missing achievements via real /api/Steam AJAX calls (competeCreatePage.js), and Create POST (CompeteController.Create, line 429) builds a real Competition + CompetitionPlayers + CompetitionGameAchievements, sends an inbox message, and redirects to a populated Index. Details (line 100) computes a real scoreboard/history from live Steam achievement data. Delete is correctly owner-gated (SteamController.DeleteComp, line 294) and VoteController is real, async, antiforgery-protected, registered in DI, and derives the voter server-side (no SteamId injection; no Lucatiel/hardcoded data anywhere). HOWEVER the entire re-match voting + game-nomination feature is a facade: VoteController writes CompetitionVote/GameVote rows that NOTHING ever reads back. CompeteDetailsVM.HasMajorityVotedToPlayAgain / NominatedGames / WinningNominatedGame are never populated by the Details action, so the nominate and vote-for-game UI never renders, and the nominateGameBtn / voteForGameBtn have NO JS click handlers at all (competeDetails.js only wires delete + voteAgain). The legacy Initiate POST is self-admittedly broken, and the Initiate GET will NRE for any user with no existing competition.",
+      "gaps": [
+        {
+          "title": "Re-match / game-nomination voting is a dead feature end-to-end",
+          "severity": "P1",
+          "file": "Controllers/CompeteController.cs:100-238",
+          "detail": "CompeteDetailsVM exposes HasMajorityVotedToPlayAgain, HasUserVotedToPlayAgain, NominatedGames, WinningNominatedGame (CompeteVMs.cs:33-37) but the Details action never sets any of them, and never reads CompetitionVote or GameVote. VoteController writes votes (competitionvote/gamevote) but no read path exists, so cast votes are write-only and invisible. Because HasMajorityVotedToPlayAgain is always false, the whole nomination/vote-for-game block in Details.cshtml:72-105 never renders.",
+          "fix": "Inject ICompetitionVoteRepository + IGameVoteRepository into CompeteController. In Details(): load CompetitionVotes for compId, set HasUserVotedToPlayAgain = votes.Any(v=>v.UserId==CurrentUserId && v.WantsToPlayAgain), HasMajorityVotedToPlayAgain = votes.Count(v=>v.WantsToPlayAgain) > (CompPlayers.Count/2). When majority true, load nominated games + GameVote tallies, set NominatedGames and WinningNominatedGame = group-by-GameId max-vote. Add read methods (e.g. GetVotesForCompetition(compId), GetGameVoteTally) to the vote repos which currently only expose Add/Update."
+        },
+        {
+          "title": "nominateGameBtn and voteForGameBtn are dead buttons with no backend wiring",
+          "severity": "P1",
+          "file": "Views/Compete/Details.cshtml:76,88",
+          "detail": "#nominateGameBtn and .voteForGameBtn are rendered but competeDetails.js (the only script loaded) wires ONLY #compDeleteBtn and #voteAgainBtn. There is no click handler, no AJAX to /api/Vote/gamevote, and no endpoint to nominate a game at all (no nomination table/route exists; GameVote only records yes/no on an existing GameId). Clicking these does nothing.",
+          "fix": "Either remove these buttons entirely, or: (a) add a Nomination concept (table + controller action) so #nominateGameBtn opens a game picker and POSTs a nomination; (b) add a competeDetails.js handler binding .voteForGameBtn click -> $.ajax POST /api/Vote/gamevote { gameId, vote:true }; (c) populate NominatedGames from real nominations so the loop at Details.cshtml:84 has data. Until a backend exists, delete the nomination/vote-for-game markup to stop lying about the capability."
+        },
+        {
+          "title": "Initiate GET throws NRE for users with no existing competition",
+          "severity": "P1",
+          "file": "Controllers/CompeteController.cs:381-388",
+          "detail": "When the user has no competitions, GetCompetitionIdsBySteamId returns null and the else branch sets existingCompetition = null; viewModel.CurrentCompetition = null. Initiate.cshtml:34 then dereferences Model.CurrentCompetition.CompetitionPlayers.Any() -> NullReferenceException -> 500. The duel-from-profile entry point is broken for any first-time user.",
+          "fix": "In Initiate GET, never leave CurrentCompetition null: keep it as the default new Competition() (with empty CompetitionPlayers) when no existing comp is found, OR guard the view: @if (Model.CurrentCompetition == null || !Model.CurrentCompetition.CompetitionPlayers.Any())."
+        },
+        {
+          "title": "Initiate POST is acknowledged-broken and will throw on save",
+          "severity": "P2",
+          "file": "Controllers/CompeteController.cs:402-425",
+          "detail": "Author comments at lines 396-410 state this method 'is broken and will not save competitions', and it AddOrUpdates competeIn.CurrentCompetition which has no CreatorId/StatusId/GameId set from the bound VM -> FK/non-null violations on SaveChanges. The Initiate.cshtml modal form (line 57) still posts to it.",
+          "fix": "Either delete the Initiate flow (controller + view + competeInitPage.js) and route 'duel from profile' through the working Create POST, or rebuild Initiate POST to set CreatorId from the auth user, StatusId via _statusRepository.GetStatusByName(\"Active\"), GameId from ChosenGame, and validate dates before AddOrUpdate."
+        },
+        {
+          "title": "Friend logic bug: friend's achievements overwritten with the user's",
+          "severity": "P2",
+          "file": "Controllers/CompeteController.cs:357-358",
+          "detail": "myAchievements = sharedMissingAchievements; then theirAchievements = myAchievements; assigns the user's list to the friend's list, so CompeteInitiateVM.FriendsAchievements equals UsersAchievements. Any view logic relying on FriendsAchievements (e.g. Initiate.cshtml:66-70 hidden fields) is wrong/duplicated.",
+          "fix": "Remove line 358; compute the friend's shared-missing list independently or pass the same sharedMissingAchievements to both intentionally with a comment. The current assignment is an accidental alias."
+        },
+        {
+          "title": "No uniqueness constraint on votes; users can spam unlimited play-again votes",
+          "severity": "P2",
+          "file": "Migrations/20260607073417_InitialSteamInfoSchema.cs:425-446",
+          "detail": "CompetitionVote and GameVote have only non-unique indexes on CompetitionId/UserId and GameId/UserId. competeDetails.js:19 always POSTs a new vote (never PUT), so one user can create N rows of WantsToPlayAgain=true, which would inflate any future majority tally. There is also no check that the voter is a participant in the competition (IDOR: any authenticated user can vote on any competition id).",
+          "fix": "Add a unique index on (CompetitionId, UserId) for CompetitionVote and (GameId, UserId) scoped per-competition for GameVote in a migration. In VoteController.CreateCompetitionVote, reject if a vote already exists for (CompetitionId, user.Id) (or upsert), and verify the user is in CompetitionPlayers for that competition before accepting the vote (return 403 otherwise)."
+        },
+        {
+          "title": "N+1 queries and in-memory Contains translation in competition listing",
+          "severity": "P3",
+          "file": "Controllers/CompeteController.cs:85-92; DAL/Concrete/CompetitionRepository.cs:36",
+          "detail": "Index loops each competition calling _gameRepository.GetGameById per row (N+1), and GetAllCompetitionsForUser issues one query per CompetitionPlayer using GetAll().Where(c => c.CompetitionPlayers.Contains(competitionPlayer)) with a detached entity. Details also re-reads _gameAchievementRepository.GetAll() inside a foreach (line 143) and calls Steam GetAchievements per participant (line 169) plus lazy-loads Status/Game per access. Functional but slow and Steam-rate-limit-prone.",
+          "fix": "Replace per-row GetGameById with a single Include(c=>c.Game) load. Rewrite GetAllCompetitionsForUser to a single query: GetAll().Where(c => c.CompetitionPlayers.Any(p => steamIds.Contains(p.SteamId))). In Details, materialize gameAchievements into a dictionary once before the loop instead of GetAll().Where(...) per achievement."
+        },
+        {
+          "title": "Create POST has no antiforgery protection",
+          "severity": "P3",
+          "file": "Controllers/CompeteController.cs:429; Views/Compete/Create.cshtml:26",
+          "detail": "The Create POST action has no [ValidateAntiForgeryToken] and there is no global AutoValidateAntiforgeryToken filter (Program.cs:143 only AddControllersWithViews). The Create form <form id=\"createForm\" method=\"post\"> uses no asp-* tag helpers so no __RequestVerificationToken is emitted. Competition creation is CSRF-able.",
+          "fix": "Add [ValidateAntiForgeryToken] to the Create POST and add @Html.AntiForgeryToken() (or convert the form to use asp-action so the token is auto-emitted) in Create.cshtml. Alternatively register a global AutoValidateAntiforgeryToken filter and ensure all GET-rendered forms emit the token."
+        }
+      ],
+      "deadOrFake": [
+        "Views/Compete/Details.cshtml:76 #nominateGameBtn — rendered button with zero JS handler and no nomination backend (dead)",
+        "Views/Compete/Details.cshtml:88 .voteForGameBtn — rendered button with no JS handler and no read path for GameVote (dead)",
+        "CompeteVMs.cs:34-37 HasMajorityVotedToPlayAgain/NominatedGames/WinningNominatedGame/HasUserVotedToPlayAgain — VM fields never populated by any controller action (always default, so dependent UI never shows)",
+        "Controllers/CompeteController.cs:404-425 Initiate POST — explicitly commented 'This method is broken and will not save competitions' (stub/broken)",
+        "Controllers/CompeteController.cs:358 theirAchievements = myAchievements — accidental aliasing, friend data discarded",
+        "VoteController gamevote endpoints (Controllers/VoteController.cs:79-111) — fully implemented but no caller anywhere in JS or views; write-only, never read back"
+      ],
+      "completionTasks": [
+        "Populate CompeteDetailsVM voting fields in CompeteController.Details by injecting and reading ICompetitionVoteRepository/IGameVoteRepository (add GetVotesForCompetition + game-vote tally read methods to those repos).",
+        "Decide nomination UX: add a nomination table/endpoint + game picker, then wire #nominateGameBtn and .voteForGameBtn in competeDetails.js to real AJAX; OR delete the nomination/vote-for-game markup from Details.cshtml until a backend exists.",
+        "Fix Initiate GET NRE by never returning a null CurrentCompetition (or guard the view), so the duel-from-profile flow works for first-time users.",
+        "Either remove the broken Initiate POST + Initiate view/JS and route duels through the working Create POST, or rebuild Initiate POST to set CreatorId/StatusId/GameId and validate dates before saving.",
+        "Remove the theirAchievements = myAchievements aliasing bug (CompeteController.cs:358) and compute the friend's missing-achievement list correctly.",
+        "Add unique indexes on (CompetitionId,UserId) and per-competition (GameId,UserId) for votes via migration, reject duplicate/non-participant votes in VoteController (close IDOR + spam).",
+        "Add [ValidateAntiForgeryToken] + emit __RequestVerificationToken on the Create form (or a global AutoValidateAntiforgeryToken filter) to close the CSRF gap on competition creation.",
+        "Address N+1: single Include(c=>c.Game) load in Index, set-based query in GetAllCompetitionsForUser, and pre-materialize game achievements in Details to cut repeated GetAll()/Steam calls."
+      ]
+    },
+    {
+      "feature": "Friends (add/remove/block/unblock, compare/compete, invite)",
+      "verdict": "works-with-gaps",
+      "summary": "The core Friends actions are genuinely wired end-to-end and are not the disaster the prior session's distrust implied. Block, remove, set/revert-nickname, and the compare page are all authenticated, antiforgery-protected (SteamController has class-level [Authorize] + [AutoValidateAntiforgeryToken], and the layout renders @Html.AntiForgeryToken() consumed by site.js/getAntiForgeryToken), ownership-checked (GetOwnedFriend verifies friend.RootId == user.Id), and actually persist (AddOrUpdate/Delete call SaveChanges). Blocked friends ARE excluded from the friends list (HomeController.cs:170 Where(!IsBlocked)) and from the compare page (FriendController.cs:50 guards IsBlocked). BlackListRepository uses a true DB-side Any() (BlackListRepository.cs:21). There is NO dead Invite-to-Team button — that capability simply does not exist; the only invite is an email \"join SteamNexus\" invite. The real gaps: (1) unblockFriend has a working backend endpoint but ZERO UI to reach it, so blocking is effectively permanent; (2) FriendRepository.GetSpecificFriend filters only by SteamId and not RootId, so when two users share a friend the wrong row can be returned, breaking the compare page and nickname edits for legitimate owners; (3) SendInvite is a side-effecting GET with no antiforgery (GET bypasses the filter), a CSRF email-send / mild open-relay vector; (4) pervasive sync-over-async (.GetAwaiter().GetResult()) on Steam API calls in the request path.",
+      "gaps": [
+        {
+          "title": "Block is a one-way trip: unblockFriend endpoint has no UI",
+          "severity": "P1",
+          "file": "src/SteamProject/Views/Home/Friends.cshtml:51-57",
+          "detail": "The Friends list renders only block-friend and remove-friend buttons. Once a friend is blocked, HomeController.cs:170 filters them out of the list (Where(!f.IsBlocked)) and no card is rendered, so there is no element to ever trigger unblock. friendsPage.js only wires .block-friend and .remove-friend (lines 208-209). The SteamController.UnblockFriend action (SteamController.cs:141-151) is fully functional but completely unreachable from the UI — the user can never recover a blocked friend except via DB surgery.",
+          "fix": "Add a 'Blocked friends' section to the Friends page: have HomeController.Friends() also pass the blocked friends (List<Friend> blocked = _friendRepository.GetFriends(user.Id).Where(f => f.IsBlocked).ToList()) into the VM, render them in a collapsible panel with an .unblock-friend button carrying data-friend-id, and add wireFriendBtn('.unblock-friend', '/api/Steam/unblockFriend', null) in friendsPage.js."
+        },
+        {
+          "title": "GetSpecificFriend ignores RootId — wrong friend row returned for shared friends (IDOR-adjacent correctness bug)",
+          "severity": "P1",
+          "file": "src/SteamProject/DAL/Concrete/FriendRepository.cs:18-21",
+          "detail": "GetSpecificFriend(steamId) does GetAll().Where(f => f.SteamId == steamId).FirstOrDefault() with NO RootId filter. If two SteamNexus users are both friends with the same Steam account, this returns whichever row EF yields first. FriendController.Index (FriendController.cs:48-50) then checks friend.RootId != currentUser.Id and, if it got the other user's row, wrongly redirects user A with 'That friend could not be found' even though A legitimately owns a row for that friend. SetNickname/RevertNickname (SteamController.cs:250, 264) hit the same method: they will NotFound a legitimate owner, or in the worst case operate against the wrong user's row depending on which is returned.",
+          "fix": "Change GetSpecificFriend to take the owner id: public Friend? GetSpecificFriend(string steamId, int rootId) => GetAll().FirstOrDefault(f => f.SteamId == steamId && f.RootId == rootId); update FriendController.Index (resolve currentUser.Id first), SetNickname, and RevertNickname to pass user.Id. This removes the cross-user collision and the spurious redirects/NotFounds."
+        },
+        {
+          "title": "SendInvite is a side-effecting GET with no antiforgery — CSRF email-send vector",
+          "severity": "P2",
+          "file": "src/SteamProject/Controllers/SteamController.cs:228-242",
+          "detail": "SendInvite sends a real email via _emailSender but is declared [HttpGet]. The class-level [AutoValidateAntiforgeryToken] only validates unsafe verbs, so GET bypasses it entirely; friendsPage.js:106 calls it with method GET and sends no token. Any third-party page can trigger an authenticated user's browser to fire arbitrary invite emails (CSRF / using the app as a mail amplifier). The basic regex (line 237) limits format but not abuse volume.",
+          "fix": "Change to [HttpPost(\"sendInvite\")] taking the email from the request body/form so AutoValidateAntiforgeryToken enforces the token; update friendsPage.js to POST with the RequestVerificationToken header (the same pattern already used by wireFriendBtn). Add a per-user rate limit on invites to prevent mail abuse."
+        },
+        {
+          "title": "Sync-over-async on Steam API calls in the request thread",
+          "severity": "P2",
+          "file": "src/SteamProject/Services/SteamService.cs:438-470",
+          "detail": "GetFriendsList, GetFriendSpecific, GetGames, and GetSharedGames are [Obsolete] sync wrappers that call .GetAwaiter().GetResult() on the async Steam HTTP calls. FriendController.Index (FriendController.cs:56-57) and SteamController endpoints invoke these synchronously, blocking a thread-pool thread on network I/O per request and risking deadlock/thread starvation under load. The compare page does two such blocking Steam round-trips (myGames + theirGames) serially.",
+          "fix": "Make FriendController.Index async (public async Task<IActionResult> Index) and call the *Async methods directly (GetGamesAsync, GetFriendSpecificAsync, and reuse GetSharedGamesAsync which already parallelizes both calls). Do the same for SteamController.SteamFriends/SpecificFriend/Games/SharedGames. Then delete the obsolete sync wrappers."
+        },
+        {
+          "title": "Compare page makes a full Steam friends-list round-trip just to validate one friend, then ignores its own guard's data",
+          "severity": "P3",
+          "file": "src/SteamProject/Controllers/FriendController.cs:48-57",
+          "detail": "Index fetches the friend from the local DB (GetSpecificFriend) for the block/ownership guard, then separately calls _steamService.GetGames twice. GetFriendSpecificAsync (SteamService.cs:178-182) itself fetches the ENTIRE friends list from Steam to find one friend — wasteful — but Index doesn't even use it; it uses the DB row. Net result is multiple redundant Steam API calls per compare-page load. Also theirGames is fetched with userId=0 so nothing is cached for the friend.",
+          "fix": "After making Index async, fetch only the two owned/target game lists via GetSharedGamesAsync(currentUser.SteamId, friendSteamId, currentUser.Id) which already parallelizes and joins, instead of GetGames twice + manual Join. Keep the DB-backed ownership/blocked guard as-is."
+        }
+      ],
+      "deadOrFake": [
+        "src/SteamProject/Controllers/SteamController.cs:141-151 UnblockFriend — functional endpoint but DEAD: no UI anywhere invokes it (friendsPage.js wires only block/remove); blocked friends are permanently unrecoverable from the app",
+        "src/SteamProject/Services/SteamService.cs:437-446,467-470 — [Obsolete]-marked sync-over-async wrappers (GetFriendsList/GetFriendSpecific/GetSharedGames) still actively called in the request path instead of being removed",
+        "src/SteamProject/wwwroot/js/friendPage.js:130 — known unfixed bug left as a comment: private friend profile leads to infinite loading spinner in the compare-achievements modal (no error path for non-public friend)"
+      ],
+      "completionTasks": [
+        "Add an unblock UI: pass blocked friends into FriendsPageVM, render a 'Blocked' panel with .unblock-friend buttons (data-friend-id), and wire wireFriendBtn('.unblock-friend','/api/Steam/unblockFriend') in friendsPage.js so UnblockFriend is reachable",
+        "Add a rootId parameter to FriendRepository.GetSpecificFriend and filter by both SteamId AND RootId; update FriendController.Index, SteamController.SetNickname, and SteamController.RevertNickname to pass the current user's Id",
+        "Convert SendInvite to [HttpPost] with the email in the request body so antiforgery is enforced; update friendsPage.js to POST with RequestVerificationToken; add per-user invite rate limiting",
+        "Make FriendController.Index async and call GetSharedGamesAsync once (parallel + joined) instead of two blocking GetGames calls; convert SteamController friend endpoints to the *Async methods",
+        "Delete the [Obsolete] sync wrappers in SteamService once all callers are async",
+        "Fix friendPage.js compare-achievements modal: add an explicit error/timeout path when a friend's profile is private so the spinner stops and error-ser is shown instead of hanging",
+        "Add integration/unit tests: block then verify excluded from list and compare; unblock then verify restored; nickname set/revert ownership; cross-user shared-friend resolution returns the caller's own row"
+      ]
+    },
+    {
+      "feature": "Inbox/Messaging (send message, read/unread + unread badge, email-on-message, system-bot messages)",
+      "verdict": "broken",
+      "summary": "The security hardening of this feature is genuinely good (sender derived from auth, antiforgery via AutoValidateAntiforgeryToken + header token, global FallbackPolicy forcing auth, body-based POST preserving &/#, recipient-exists check, textContent rendering of stored content), but the refactor that removed `fromId` from the MessagesBetween action signature was never reconciled with the client JS, so the core read-conversation flow is now completely broken. Messages.js still calls `messagesBetween?fromId=<contact>&toId=<self>`; the server ignores `fromId`, binds its single `toId` param to the caller's OWN id, and runs GetMessagesBetween(self, self) — so every conversation panel (real contacts AND the system bot) renders empty. The same bug makes MarkConversationRead(self, self) a no-op, so opening a thread never clears unread state and the unread count never decrements. The advertised email-on-message notification does not exist at all — no controller or service in the messaging path ever calls IEmailSender.SendEmailAsync. Sending a message persists correctly and the unread COUNT query is correct, but the badge UI only appears on deltas during a live session and never on page load for pre-existing unread mail. Net: you can send a message and increment a counter, but you cannot read any conversation, unread state never clears, and email notifications are vaporware.",
+      "gaps": [
+        {
+          "title": "Reading any conversation is broken: client/server param contract mismatch yields GetMessagesBetween(self, self)",
+          "severity": "P0",
+          "file": "wwwroot/js/Messages.js:135 and :94; Controllers/MessagesController.cs:49,55",
+          "detail": "The action is `MessagesBetween(int toId)` and derives the 'from' side as the authenticated user, then calls `_inboxRepository.GetMessagesBetween(user.Id, toId)`. The JS calls `/api/Messages/messagesBetween?fromId=${id}&toId=${messId}` where `id` is the OTHER contact and `messId` (from _Messages.cshtml .messengerId) is the authenticated user's OWN domain id. ASP.NET binds the action's `toId` to the querystring `toId` (=self) and silently drops `fromId`. Result: GetMessagesBetween(self, self) returns only rows where SenderId==RecipientId==self (effectively none). Every contact thread and the SteamNexus system-bot thread (loadContentForSystemBot, line 94) render an empty message list.",
+          "fix": "Pick one contract and make both sides agree. Cleanest: change the JS to send the contact id in the param the server actually reads — `messagesBetween?toId=${id}` (drop fromId and the self id) at both Messages.js:135 and :94 (system bot becomes `toId=69420`). The server already correctly uses user.Id for the 'from' side. Add an integration/E2E test that seeds A->B and B->A messages and asserts the panel renders both."
+        },
+        {
+          "title": "Unread state never clears; badge does not decrement after opening a thread",
+          "severity": "P0",
+          "file": "Controllers/MessagesController.cs:68; DAL/Concrete/InboxRepository.cs:33-43",
+          "detail": "MessagesBetween calls `MarkConversationRead(user.Id, toId)` but toId is the caller's own id (see P0 above), so MarkConversationRead(self, self) matches no rows (predicate RecipientId==self && SenderId==self && !IsRead) and sets nothing read. GetUnreadCount (MessageCount endpoint) therefore stays constant; the unread badge polled every 1s never goes down once a thread is opened. This is a direct consequence of the same param bug, but is a distinct user-visible failure that must be re-verified after the fix.",
+          "fix": "After fixing the toId contract so it carries the real contact id, MarkConversationRead(user.Id, contactId) will correctly flip IsRead. Add a test: seed unread B->A, open thread, assert GetUnreadCount(A) drops. Also batch the writes (see P2 N+1) — currently MarkConversationRead loops AddOrUpdate with a SaveChanges per row."
+        },
+        {
+          "title": "Email-on-message notification is completely absent",
+          "severity": "P1",
+          "file": "Services/InboxService.cs:25-33; Controllers/MessagesController.cs:84",
+          "detail": "The feature is specified to send an email when a message is received, and EmailSender/IEmailSender is registered (Program.cs:124). But SendMessageTo -> _inboxService.SendMessage only persists an InboxMessage; neither InboxService nor MessagesController injects or calls IEmailSender.SendEmailAsync. There is no email-on-message code path anywhere. The capability is claimed but does not exist.",
+          "fix": "Inject IEmailSender into InboxService (or MessagesController), and after persisting a user-to-user message, look up the recipient's email (ApplicationDbContext/UserManager via the recipient's AspNetUserId on the domain User) and call SendEmailAsync with a notification subject/body. Make SendMessage async (Task) and await it, or fire-and-forget through a hosted/background queue to avoid blocking the request. Skip email for system-bot sends (SenderId==SystemUsers.SystemSenderId). Respect a per-user notification preference if one exists. Note EmailSender.GetTemplateInfo only maps Confirmation/Invitation and falls through to the password-reset template for everything else — add a message-notification branch or send plain content."
+        },
+        {
+          "title": "InboxController.Index NREs if the authenticated user has no domain User row",
+          "severity": "P2",
+          "file": "Controllers/InboxController.cs:35-36; DAL/Concrete/UserRepository.cs:18-26",
+          "detail": "GetUser uses FirstOrDefault and returns null when no domain User matches the AspNetUserId. Index does `User user = _userRepository.GetUser(id); ... _inboxRepository.GetInboxMessages(user.Id)` with no null check, throwing a NullReferenceException -> 500 for an authenticated identity that lacks a domain row. The `if (id is null)` guard at line 31 is effectively dead because the global FallbackPolicy (Program.cs:132-137) already forces authentication before the action runs.",
+          "fix": "After GetUser, `if (user is null) return RedirectToAction(\"Index\",\"Home\");` (or return an empty inbox view). The same null risk exists in MessagesViewComponent.cs:31 and MessagesMiddleware.cs:37 — guard those too. Remove the dead `id is null -> View()` branch."
+        },
+        {
+          "title": "MarkConversationRead issues one SaveChanges per unread row (N+1 writes)",
+          "severity": "P2",
+          "file": "DAL/Concrete/InboxRepository.cs:38-42; DAL/Concrete/Repository.cs:73-79",
+          "detail": "The loop calls AddOrUpdate(m) per message, and AddOrUpdate calls _context.Update + _context.SaveChanges every iteration. Opening a thread with N unread messages performs N tracked updates and N round-trips. Currently masked by the P0 no-op, but will surface once the param bug is fixed.",
+          "fix": "Set IsRead=true on the tracked entities in the loop and call SaveChanges once, or use EF Core ExecuteUpdate: `_ctx.Set<InboxMessage>().Where(m => m.RecipientId==recipientId && m.SenderId==senderId && !m.IsRead).ExecuteUpdate(s => s.SetProperty(m => m.IsRead, true));`"
+        },
+        {
+          "title": "Unread badge does not appear for pre-existing unread mail on page load",
+          "severity": "P2",
+          "file": "wwwroot/js/Messages.js:24-46",
+          "detail": "initialCount() stores the current unread count into msgCount but never shows msgAlert. getCount() only reveals the alert when `data > msgCount`, i.e. only when a NEW message arrives during the live session. A user who logs in already holding unread messages sees no badge until someone sends another message. The Inbox table view (Views/Inbox/Index.cshtml) also has no read/unread visual distinction at all.",
+          "fix": "In initialCount, if the returned count > 0 show msgAlert immediately. Drive the badge from the absolute unread count (render a number) rather than only deltas. Optionally bold/highlight unread rows in Inbox/Index.cshtml using the IsRead flag (currently not even surfaced to that view's model rendering)."
+        },
+        {
+          "title": "Optimistic local echo of just-sent message uses innerHTML with a weak sanitizer",
+          "severity": "P3",
+          "file": "wwwroot/js/Messages.js:194-223 (ncode at 17-22)",
+          "detail": "On a successful send, the message is echoed into the DOM via `msgContent.innerHTML += ...${ncode(msg)}...`. ncode only escapes the contents of <script>...</script> blocks; it does not escape <, >, or attribute-based vectors (e.g. <img src=x onerror=...>). This is the user's own just-typed input rendered in their own session (self-XSS, not stored/reflected from another user), so impact is low, but it is inconsistent with the textContent approach used everywhere else.",
+          "fix": "Build the echoed bubble with createElement + textContent exactly like loadContentForSystemBot does (Messages.js:101-111), instead of innerHTML += with ncode. Remove the ncode helper."
+        }
+      ],
+      "deadOrFake": [
+        "Email-on-message: advertised capability with zero implementation — no SendEmailAsync call exists anywhere in the messaging path (Services/InboxService.cs:25-33, Controllers/MessagesController.cs:84)",
+        "Controllers/InboxController.cs:31-34 — `if (id is null) return View();` is dead code; the global FallbackPolicy (Program.cs:132-137) forces authentication before the action executes",
+        "wwwroot/js/Messages.js:25,33 — messageCount fetch appends `?messengerId=${messId}` but the MessageCount action takes no parameters and derives the user from auth; the querystring is dead/ignored",
+        "wwwroot/js/Messages.js:135,94 — `fromId` querystring param is dead: the MessagesBetween action signature has no fromId and silently ignores it (root cause of the broken read flow)",
+        "ViewComponents/MessagesViewComponent.cs:26 and Middlewares/MessagesMiddleware.cs:29 — Console.WriteLine debug logging left in production code",
+        "Middlewares/MessagesMiddleware.cs:34-38 — computes user twice: GetUser(userId) then GetUser(userId).Id again, a redundant DB hit"
+      ],
+      "completionTasks": [
+        "Fix the client/server param contract: change Messages.js:135 to `messagesBetween?toId=${id}` and Messages.js:94 to `toId=69420` so the contact id reaches the server's toId param; the server already derives 'from' from auth. Verify conversations render for both real contacts and the system bot.",
+        "Re-verify unread clearing after the param fix: opening a thread must call MarkConversationRead(self, contactId) and decrement GetUnreadCount; add an integration test seeding unread B->A and asserting the count drops.",
+        "Implement email-on-message: inject IEmailSender, resolve recipient email via UserManager/AspNetUserId, await SendEmailAsync (make SendMessage async or enqueue to a background worker), skip for SystemSenderId, and add a message-notification template branch in EmailSender.GetTemplateInfo (currently falls through to the password-reset template).",
+        "Add null guards after GetUser in InboxController.Index (35-36), MessagesViewComponent (31), and MessagesMiddleware (37); remove the dead `id is null` branch in InboxController.",
+        "Batch MarkConversationRead into a single SaveChanges or EF Core ExecuteUpdate to remove the N+1 write pattern.",
+        "Show the unread badge on page load when initial count > 0 and surface IsRead-based styling in Inbox/Index.cshtml so already-unread mail is visible.",
+        "Replace the innerHTML+ncode optimistic echo in sendMsg with createElement+textContent to match the XSS-safe rendering used elsewhere; delete the ncode helper.",
+        "Remove leftover Console.WriteLine debug logging from MessagesViewComponent and MessagesMiddleware; collapse the duplicate GetUser call in the middleware.",
+        "Add E2E coverage that actually exercises the two-user round trip (A sends, B receives, B reads, B's badge clears) instead of asserting only the send path."
+      ]
+    },
+    {
+      "feature": "News + OpenAI summaries",
+      "verdict": "works-with-gaps",
+      "summary": "The core happy path genuinely works end-to-end: Dashboard tiles and the ShowMoreNews page render Steam news, and the Summarize buttons call NewsController GET endpoints which call SteamService.GetGameNewsAsync and OpenAiApiService, returning AI summaries. The prior session's async/null-safety fixes are real: NewsController correctly awaits GetGameNewsAsync (no sync-over-async), null-guards the full _poco?.appnews?.newsitems chain, uses FirstOrDefault, and wraps OpenAI calls in try/catch so a failing summary returns a fallback string at HTTP 200. However, two specific audit claims are FALSE: there is NO server-side IMemoryCache summary cache and NO per-user rate limit anywhere in the entire project (grep for IMemoryCache/AddMemoryCache/RateLimit/AddRateLimiter returns zero hits in non-bin .cs files). All caching is client-side localStorage (1h TTL), which is trivially bypassed and does not protect the paid OpenAI API. This makes every authenticated GET an uncapped, billable OpenAI call. Additionally GetGameNewsAsync deserializes the Steam JSON with no try/catch, so a malformed 200 response from Steam throws and produces a 500 rather than the claimed graceful fallback, and ShowMoreNews.cshtml dereferences Model._game without guarding it.",
+      "gaps": [
+        {
+          "title": "No server-side summary cache (IMemoryCache claim is false) — every request hits paid OpenAI",
+          "severity": "P1",
+          "file": "Controllers/NewsController.cs:72,119",
+          "detail": "The audit claims a server-side IMemoryCache summary cache exists. It does not — grep for IMemoryCache/AddMemoryCache across all non-bin .cs files returns zero results, and NeitherNewsController nor OpenAiApiService inject or use any cache. The only caching is client-side localStorage in summarizeSpecificNews.js:64-104 and dashboardGameNews.js:55-63, which is per-browser and trivially bypassed (incognito, cleared storage, direct curl to /api/news/GetRecentGameNews). Every uncached call invokes OpenAI ChatCompletion, which costs money per call.",
+          "fix": "Register AddMemoryCache() in Program.cs and inject IMemoryCache into OpenAiApiService (or NewsController). Key the cache on a hash of the news contents (or appId+newsIndex+gid) with a sliding/absolute expiration (e.g. 1-6h). In SummarizeNewsShortAsync/LongAsync, check cache before calling _openAiService.ChatCompletion.CreateCompletion and store the result on success. This deduplicates identical summaries across all users, not just one browser."
+        },
+        {
+          "title": "No per-user rate limit on paid OpenAI endpoints (rate-limit claim is false) — cost-amplification abuse",
+          "severity": "P1",
+          "file": "Controllers/NewsController.cs:41,90",
+          "detail": "The audit claims a per-user rate limit. None exists — grep for RateLimit/AddRateLimiter across the project returns zero hits and Program.cs registers no rate limiter. Both GetRecentGameNews and GetSpecificGameNews are [Authorize] GET endpoints that each trigger a billable OpenAI ChatCompletion call with no throttle. Any authenticated user can loop these (e.g. curl with their auth cookie over many appIds) and run up an unbounded OpenAI bill.",
+          "fix": "Add ASP.NET Core rate limiting: builder.Services.AddRateLimiter(...) with a per-user partitioned policy (PartitionedRateLimiter keyed on userManager.GetUserId / User.Identity.Name), e.g. a fixed/sliding window of N summaries per minute. Apply [EnableRateLimiting(\"openai\")] to NewsController. Combine with the server-side cache above so cache hits don't consume the budget."
+        },
+        {
+          "title": "Unhandled JSON deserialize in GetGameNewsAsync throws 500 on malformed Steam response",
+          "severity": "P2",
+          "file": "Services/SteamService.cs:287",
+          "detail": "var newsPoco = JsonSerializer.Deserialize<GameNewsPoco>(jsonResponse); has no try/catch. GetJsonStringFromEndpointAsync only returns null on transport/HTTP failure (line 51,56) — a 200 response with non-JSON or schema-mismatched body (Steam occasionally returns HTML error pages) passes the null check at line 281 and then throws JsonException at 287, which bubbles out of GetGameNewsAsync and the awaiting controller action as an unhandled 500. This contradicts the 'failing fetch shows fallback at 200 not 500' requirement.",
+          "fix": "Wrap the Deserialize call in try/catch (JsonException), log a warning, and return the empty gameVM (same as the jsonResponse==null branch) so the controller's null-guard at NewsController.cs:67/114 produces the 'no recent news found' fallback at 200."
+        },
+        {
+          "title": "ShowMoreNews view dereferences Model._game without a null guard (potential NRE/500)",
+          "severity": "P2",
+          "file": "Views/Home/ShowMoreNews.cshtml:23",
+          "detail": "The view guards only `Model != null && Model._poco != null` (line 15) but then accesses `@Model._game.AppId` (line 23) and `@Model._game.Name` (line 24). In HomeController.ShowMoreNews, _game is assigned only when GetGameNewsAsync succeeds (HomeController.cs:121); when the Steam fetch returns an empty GameNewsVM, _poco is null so the outer guard catches it — but if a future path sets _poco without _game (or _poco is populated from a malformed-but-parseable response while _game stays null), line 23 throws NRE during view render → 500.",
+          "fix": "Change the guard to `@if (Model?._poco != null && Model._game != null)` so both required objects are validated before dereference; keep the existing else branch as the fallback message."
+        },
+        {
+          "title": "OpenAiApiService returns null (not a fallback) when completion is unsuccessful",
+          "severity": "P3",
+          "file": "Services/OpenAiApiService.cs:41,63",
+          "detail": "When completionResult.Successful is false (e.g. OpenAI returns an error without throwing), the methods return null. The controller try/catch (NewsController.cs:71-77) only catches exceptions, not a null return, so summarizedNews becomes literally null and is serialized as {\"summarizedNews\":null}. The JS happens to handle this (summarizeSpecificNews.js:83 `if (data.summarizedNews)` and dashboardGameNews.js:71 null/'null' check), so it degrades gracefully today, but the server contract is fragile and depends entirely on client defensiveness.",
+          "fix": "In OpenAiApiService, log completionResult.Error and return a meaningful fallback string (e.g. \"Summary unavailable right now.\") instead of null, OR have the controller treat a null/empty summary as the 'no valid news' fallback explicitly rather than relying on the JS."
+        }
+      ],
+      "deadOrFake": [
+        "Services/OpenAiApiService.cs:41 and :63 — methods return null on unsuccessful (non-throwing) OpenAI completion; relies on client JS null-checks to avoid showing 'null' to users",
+        "Caching described by prior audit as 'server-side IMemoryCache' is fake — only client-side localStorage exists (wwwroot/js/News/summarizeSpecificNews.js:64-104, dashboardGameNews.js:55-63); no IMemoryCache in any .cs file",
+        "Services/SteamService.cs:479-482 — obsolete sync-over-async GetGameNews wrapper (GetAwaiter().GetResult()) still present, though the News feature no longer calls it (NewsController and HomeController both use the async path)"
+      ],
+      "completionTasks": [
+        "Add builder.Services.AddMemoryCache() in Program.cs and inject IMemoryCache into OpenAiApiService; cache summaries keyed on a content hash (appId+gid or normalized contents) with ~1-6h expiry, checked before every CreateCompletion call",
+        "Add builder.Services.AddRateLimiter with a per-user partitioned policy keyed on the Identity user id, and decorate NewsController with [EnableRateLimiting] so the paid OpenAI GET endpoints are throttled per user",
+        "Wrap JsonSerializer.Deserialize<GameNewsPoco> at SteamService.cs:287 in try/catch (JsonException); on failure log and return the empty GameNewsVM so the controller yields a 200 fallback instead of a 500",
+        "Tighten the ShowMoreNews.cshtml:15 guard to require Model._game != null before dereferencing Model._game.AppId/Name at lines 23-24",
+        "Make OpenAiApiService return a fallback string (and log completionResult.Error) instead of null when completionResult.Successful is false, removing reliance on client-side null handling",
+        "Remove the obsolete sync-over-async GetGameNews wrapper (SteamService.cs:479-482, ISteamService.cs:47-48) now that all News callers use GetGameNewsAsync"
+      ]
+    },
+    {
+      "feature": "Badges + Awards",
+      "verdict": "works-with-gaps",
+      "summary": "The feature is genuinely wired end-to-end, contradicting the assumption that it is mostly fake. All 5 badges seed from Data/badges.json with real distinct PNG assets (steamLink, level10, followedThreeGames, tenAchievements, fiveFriends) via SeedBadges.Initialize (called at Program.cs:223), matched by Name. All 5 award conditions (SteamAccountLinked/\"Nexus Newcomer\", Level10/\"Rising Star\", FollowedThreeGames/\"Dedicated Follower\", TenAchievements/\"Achievement Hunter\", FiveFriends/\"Friendly Face\") have matching BadgeName strings between the C# conditions and badges.json, are auto-registered via reflection (Program.cs:160-167), and on fulfillment actually persist a UserBadge with the correct BadgeId (looked up by name from the DB, not hardcoded) because Repository.AddOrUpdate calls SaveChanges internally (Repository.cs:73-79). CheckForNewBadges eager-loads Friends/UserGameInfos/UserAchievements/UserBadges via GetUserWithAwardData (UserRepository.cs:28-37), avoiding the per-condition N+1 storm on collections. GetBadgeDetails/{1..5} and GetBadgeImage/{1..5} are real, DB-backed, and distinct (return per-id Name/Description/Image bytes). The award popup builds DOM nodes with textContent for name/description (site.js:41,49), so it is XSS-safe as claimed. Remaining gaps are correctness/robustness issues: no DB uniqueness constraint plus a non-atomic check-then-insert allows duplicate awards under concurrency, an in-loop GetAll() full-table query, sync-over-async, and the congratulatory inbox message is sent before the award is confirmed persisted.",
+      "gaps": [
+        {
+          "title": "Duplicate badge awards possible: no unique constraint + non-atomic check-then-insert",
+          "severity": "P1",
+          "file": "Controllers/BadgeController.cs:74-83",
+          "detail": "Dedup relies solely on UserHasBadgeAsync (UserBadgeRepository.cs:15-18) querying the DB, then later AddOrUpdate inserts a new row. The UserBadge table has only the PK on Id and two non-unique FK indexes IX_UserBadge_BadgeId / IX_UserBadge_UserId (Migrations/20260607073417_InitialSteamInfoSchema.cs:465-471; SteamInfoDbContext.cs:284-299 defines no HasIndex IsUnique). Two concurrent CheckForNewBadges polls (the JS polls every 60s, but overlapping tabs/requests are possible) both pass the AnyAsync check and both insert, producing duplicate UserBadge rows and duplicate inbox messages. AddOrUpdate also calls _context.Update on a brand-new entity with Id=0, which EF treats as Add — correct here, but fragile.",
+          "fix": "Add a unique composite index in SteamInfoDbContext.OnModelCreating: entity.HasIndex(e => new { e.UserId, e.BadgeId }).IsUnique(); generate a migration. Then in CheckForNewBadges catch DbUpdateException (unique violation) and skip silently, OR wrap the check+insert so the unique index is the source of truth. This makes the award idempotent under concurrency regardless of the read-side check."
+        },
+        {
+          "title": "Congratulatory inbox message sent before award persistence is confirmed",
+          "severity": "P2",
+          "file": "Controllers/BadgeController.cs:80-81",
+          "detail": "_inboxService.SendMessage(...) is called on line 80 BEFORE _userBadgeRepository.AddOrUpdate(userBadge) on line 81. SendMessage itself persists immediately (InboxService.cs:32 -> AddOrUpdate -> SaveChanges). If the subsequent UserBadge insert throws (e.g. FK/constraint failure), the user receives a 'you earned the X badge' message but the badge was never recorded — the UI lies about success and the badge will be re-evaluated/re-messaged on the next poll, spamming the inbox.",
+          "fix": "Persist the UserBadge first; only send the inbox message after AddOrUpdate succeeds. Better: wrap both in a single transaction (BeginTransaction on SteamInfoDbContext) so the badge row and the notification commit atomically, or send the message only inside the success path after the unique-index insert is confirmed."
+        },
+        {
+          "title": "N+1 / full-table scan: badge lookup re-queries all badges inside the condition loop",
+          "severity": "P3",
+          "file": "Controllers/BadgeController.cs:65",
+          "detail": "Inside the foreach over award conditions, _badgeRepository.GetAll().FirstOrDefault(b => b.Name == awardCondition.BadgeName) issues a fresh DB query for every fulfilled condition. Badge.Image is a byte[] column (300-500KB each per wwwroot/assets/badges), and GetAll() with FirstOrDefault by Name pulls the full row including the large image blob just to read the Id. With 5 conditions this is up to 5 separate queries each materializing a large blob.",
+          "fix": "Load the badges once before the loop into a name->id dictionary projecting only Id and Name: var badgeMap = _badgeRepository.GetAll().Select(b => new { b.Id, b.Name }).ToDictionary(b => b.Name, b => b.Id); then resolve badge.Id from the dictionary inside the loop. This is one query, no blob materialization."
+        },
+        {
+          "title": "Sync-over-async and pointless async on Badge endpoints",
+          "severity": "P3",
+          "file": "Controllers/BadgeController.cs:93-119",
+          "detail": "GetBadgeDetails and GetBadgeImage are declared async Task<...> but contain no await — they call the synchronous _badgeRepository.FindById (Repository.cs:38-42, uses _dbSet.Find). This blocks a thread on DB I/O and yields a compiler warning; the async is cosmetic. Similarly CheckForNewBadges uses the sync GetUserWithAwardData and GetAll inside an async method.",
+          "fix": "Either make these endpoints synchronous (return ActionResult directly) or add an async repository path (FindByIdAsync using FindAsync / FirstOrDefaultAsync). Prefer the latter for the image endpoint which streams blob bytes. Remove the unused async to silence CS1998."
+        },
+        {
+          "title": "Badge popup container is shared and re-fetched on every 60s poll",
+          "severity": "P3",
+          "file": "wwwroot/js/site.js:24-60,76-82",
+          "detail": "checkForNewBadges always calls showAwardPopup(badgeId) when the response is truthy — but CheckForNewBadges returns Ok(awardedBadges) which is ALWAYS a (possibly empty) array, so 'if (badgeId)' is true even for [] (an empty array is truthy in JS). showAwardPopup then clears #badge-info and iterates zero times, so the popup is not shown (popup.style.display='block' is inside the per-badge success callback), so it is not visibly broken — but the guard is misleading and any future change to show a header would flash an empty popup every minute.",
+          "fix": "Guard on length: success: function (badges) { if (Array.isArray(badges) && badges.length) showAwardPopup(badges); }. This makes the intent explicit and prevents an empty-array poll from doing DOM work every 60s."
+        }
+      ],
+      "deadOrFake": [
+        "BadgePOCO.cs:9 (ImageFileName) and :10 (ImageData byte[]) on BadgeData are populated by GetBadgeDetails (BadgeController.cs:104-105) but never used client-side — site.js fetches the image separately via GetBadgeImage, so ImageData base64 blob is serialized into every GetBadgeDetails JSON response (300-500KB) and discarded. Dead/wasteful payload.",
+        "Models/GapProcessor.cs is unrelated to badges (maps a percentage to a gap value 1..11) and has no caller in the badge/award path — assigned to this feature but is not part of it; verify it is used elsewhere or it is dead code.",
+        "BadgeController.cs:104 comment '// Update this with your preferred image file name format.' is leftover scaffolding text, though the line itself works."
+      ],
+      "completionTasks": [
+        "Add a unique composite index on UserBadge(UserId, BadgeId) in SteamInfoDbContext.OnModelCreating and generate+apply a migration, then handle DbUpdateException in CheckForNewBadges so concurrent polls cannot create duplicate awards.",
+        "Reorder CheckForNewBadges to persist the UserBadge (and confirm success) before calling _inboxService.SendMessage, ideally inside a single DB transaction so the badge row and the notification commit atomically.",
+        "Hoist the badge name->id resolution out of the condition loop into a single projected dictionary query (Id+Name only) to eliminate the in-loop full-row/blob queries.",
+        "Add async repository methods (FindByIdAsync / FirstOrDefaultAsync) and make GetBadgeImage/GetBadgeDetails/CheckForNewBadges genuinely awaitable, or drop the unused async; stop serializing ImageData base64 in GetBadgeDetails since the client never reads it.",
+        "Fix the JS poll guard in site.js to check Array.isArray(badges) && badges.length before calling showAwardPopup, preventing empty-array DOM work every 60s.",
+        "Optionally trigger an immediate badge re-check after the events that grant badges (Steam link, level/achievement/friend/follow updates) instead of relying solely on the 60s poll, to remove award latency."
+      ]
+    },
+    {
+      "feature": "Admin dashboard (metrics, ban/unban, delete user, load games/genres from curator)",
+      "verdict": "works-with-gaps",
+      "summary": "The dashboard genuinely works for most read paths: Index metrics are real SQL COUNTs over seeded fixtures (UserCount, GameCount, GenreCount are non-zero because SeedGameData loads games/genres from Data/Results.csv and SeedDomainFixtures seeds users; BannedCount is honestly 0 until someone is banned). Ban (Delete) is correctly POST + ValidateAntiForgeryToken, has a null-guard on the domain user, confirms via JS, and is keyed off SteamId — and the whole controller is [Authorize(Roles=\\\"admin\\\")]. However, several requirements from the audit brief are NOT met: there is NO Unban capability anywhere (no action, no repository method on IBlackListRepository, no UI button on ViewBannedIds) — once banned a SteamId is permanently blacklisted with no admin path to reverse it. The curator-key misconfiguration does NOT surface a distinct banner: when CuratorSteamId is empty the service returns an empty list and LoadGames.cshtml falsely renders \\\"All Games Loaded,\\\" a UI that lies about success. The destructive ban is not transactional (per-call SaveChanges across two repositories/contexts can leave a half-banned user), CleanupGenres is POST but missing antiforgery, LoadGameInfo has an unguarded null-deref on GetGameByAppId, and there are silent empty catches plus N+1 patterns.",
+      "gaps": [
+        {
+          "title": "Unban / remove-from-blacklist does not exist",
+          "severity": "P0",
+          "file": "Controllers/AdminController.cs:243; Views/Admin/ViewBannedIds.cshtml:34; DAL/Abstract/IBlackListRepository.cs:5",
+          "detail": "The audit explicitly requires Unban to exist. ViewBannedIds only renders a read-only table of banned SteamIds (ViewBannedIds.cshtml:34-39). There is no Unban action in AdminController, and IBlackListRepository exposes only GetBlackList/CheckForBlackList — no Delete/RemoveById for blacklist entries (the base Repository.Delete exists but is never wired to a UI). A banned SteamId is permanently locked out with no admin reversal.",
+          "fix": "Add [HttpPost][ValidateAntiForgeryToken] public IActionResult Unban(string id) to AdminController that loads the BlackList row via _blackListRepository.GetAll().FirstOrDefault(b => b.SteamId == id), and if found calls _blackListRepository.Delete(row), then RedirectToAction(nameof(ViewBannedIds)). In ViewBannedIds.cshtml add a per-row <form asp-action=\"Unban\" asp-route-id=\"@blackListId\" method=\"post\"> with a confirm() and an antiforgery token, and change the model to carry the row id if SteamId is not unique."
+        },
+        {
+          "title": "Curator misconfiguration shows no distinct banner; UI lies about success",
+          "severity": "P1",
+          "file": "Controllers/AdminController.cs:141; Services/SteamService.cs:192; Views/Admin/LoadGames.cshtml:19",
+          "detail": "GetSteamCuratorGamesAsync returns Enumerable.Empty<Game>() and only LogWarning when _curatorSteamId is empty (SteamService.cs:192-196). LoadGames passes the resulting empty returnGames list to the view, which renders 'All Games Loaded' (LoadGames.cshtml:19-25) — indistinguishable from the genuine all-loaded case. Admin cannot tell the curator key is unconfigured.",
+          "fix": "Have GetSteamCuratorGamesAsync signal misconfig distinctly (e.g. throw a typed CuratorNotConfiguredException, or return a result object with a Configured flag). In AdminController.LoadGames, check string.IsNullOrEmpty config / catch the exception and set ViewBag.CuratorNotConfigured = true (read IConfiguration[\"steamAPIKeys:CuratorSteamId\"] or inject the value). In LoadGames.cshtml add a top branch: @if(ViewBag.CuratorNotConfigured == true){ render an alert-warning banner 'Curator Steam ID is not configured — set steamAPIKeys:CuratorSteamId.' } before the All-Loaded/empty branch."
+        },
+        {
+          "title": "Ban (Delete) is not transactional across multiple SaveChanges and two contexts",
+          "severity": "P1",
+          "file": "Controllers/AdminController.cs:102-134; DAL/Concrete/Repository.cs:73-86",
+          "detail": "Delete performs RemoveLoginAsync (ApplicationDbContext), then per-row _userGameInfoRepository.Delete and _friendRepository.Delete (each calling SaveChanges individually per Repository.cs:81-86), then _userRepository.AddOrUpdate, then _blackListRepository.AddOrUpdate — all separate commits on SteamInfoDbContext, with the login removal on a different DbContext. A failure midway leaves a user with login removed but games/friends/blacklist inconsistent, with no rollback.",
+          "fix": "Wrap the SteamInfoDbContext mutations in an explicit transaction: inject SteamInfoDbContext (or add a unit-of-work method), open ctx.Database.BeginTransaction(), perform the domain deletions/updates, commit, and on exception roll back and surface an error. Order RemoveLoginAsync first and only proceed with domain mutations after it succeeds (already done), but commit domain changes atomically. Consider compensating logic if RemoveLoginAsync succeeds but the domain transaction fails."
+        },
+        {
+          "title": "CleanupGenres POST action missing antiforgery token",
+          "severity": "P1",
+          "file": "Controllers/AdminController.cs:248-249",
+          "detail": "CleanupGenres is [HttpPost] but lacks [ValidateAntiForgeryToken], unlike Delete/LoadGames/LoadGameInfo. It mutates Games.Genres/Categories and deletes Igdbgenre rows. A crafted cross-site POST while an admin is authenticated could trigger destructive DB edits (CSRF). The AdminNavigation form does emit a token by default, so adding the attribute is safe.",
+          "fix": "Add [ValidateAntiForgeryToken] above CleanupGenres (line 249) to match the other destructive POST actions."
+        },
+        {
+          "title": "LoadGameInfo unguarded null dereference on GetGameByAppId",
+          "severity": "P2",
+          "file": "Controllers/AdminController.cs:184-185",
+          "detail": "var currentGame = _gameRepository.GetGameByAppId(game.AppId); — GameRepository.GetGameByAppId is declared Game? (GameRepository.cs:17) and can return null. Line 185 immediately dereferences currentGame.Genres without a null check, throwing NRE if a game in GetAll() is not resolvable by AppId (e.g. AppId 0/duplicate). The loop iterates the very list it just queried so it is usually safe, but any inconsistency causes a 500.",
+          "fix": "After line 184 add: if (currentGame == null) continue; before reading currentGame.Genres, or reuse the already-loaded game object instead of re-fetching by AppId."
+        },
+        {
+          "title": "Silent empty catch blocks swallow failures during bulk load",
+          "severity": "P2",
+          "file": "Controllers/AdminController.cs:156-160; 205-208",
+          "detail": "LoadGames catch{ continue; } (156-160) silently drops any game that fails to save with no logging. LoadGameInfo catch{} (205-208, comment 'Steam API failed') swallows all genre/category extraction errors with zero logging. An admin gets a success view with silently missing data and no diagnostics.",
+          "fix": "Inject ILogger<AdminController> and log the exception with the offending game.AppId in both catches (LogWarning(ex, ...)) before continuing, so partial failures are diagnosable. Surface a count of skipped games in the view."
+        },
+        {
+          "title": "N+1 query in ShowAllUsers and Delete user lookup",
+          "severity": "P3",
+          "file": "Controllers/AdminController.cs:61-74; 88-95",
+          "detail": "ShowAllUsers loads all domain users (GetAllUsers().ToList()) then issues one FindByIdAsync per user (61-63) — N+1 round-trips against the Identity store. Delete loads ALL users (GetAllUsers) and linearly scans for a matching SteamId (88-95) instead of a single indexed query.",
+          "fix": "For Delete, add IUserRepository.GetUserBySteamId(string) doing _dbSet.FirstOrDefault(u => u.SteamId == id) and call _userManager.FindByIdAsync once. For ShowAllUsers, project a single join (Users joined to AspNetUsers on AspNetUserId) or batch-load identity users by id set (_userManager.Users.Where(u => ids.Contains(u.Id))) to avoid per-row awaits."
+        }
+      ],
+      "deadOrFake": [
+        "No fake/hardcoded dashboard data found: Index counts at AdminController.cs:50-53 are real GetAll().Count()/GetBlackList().Count() over seeded fixtures (SeedGameData.cs loads games+genres from Data/Results.csv; SeedDomainFixtures.cs seeds users/friends).",
+        "Controllers/AdminController.cs:156-160 — empty catch{continue;} swallows per-game save failures with no logging.",
+        "Controllers/AdminController.cs:205-208 — empty catch{} ('Steam API failed') swallows genre/category extraction errors with no logging.",
+        "Views/Admin/LoadGames.cshtml:19-25 — 'All Games Loaded' card is shown for BOTH the genuine all-loaded case AND the curator-misconfigured empty-result case (UI lies about success).",
+        "DAL/Abstract/IBlackListRepository.cs:5-8 — interface has GetBlackList/CheckForBlackList but no remove/unban method; the unban capability is entirely absent (dead requirement, no backend)."
+      ],
+      "completionTasks": [
+        "Implement Unban: add IBlackListRepository removal usage + [HttpPost][ValidateAntiForgeryToken] Unban(string id) in AdminController, and an Unban button+form (with antiforgery + confirm) per row in ViewBannedIds.cshtml.",
+        "Add a distinct curator-misconfiguration banner: make GetSteamCuratorGamesAsync signal misconfig (typed exception or result flag), detect it in LoadGames, and render an alert-warning in LoadGames.cshtml instead of 'All Games Loaded'.",
+        "Make the ban (Delete) operation transactional: wrap SteamInfoDbContext mutations (game-info deletes, friend deletes, user update, blacklist insert) in a single BeginTransaction/Commit with rollback on failure.",
+        "Add [ValidateAntiForgeryToken] to CleanupGenres (AdminController.cs:249).",
+        "Guard the null deref in LoadGameInfo: 'if (currentGame == null) continue;' before line 185 (or reuse the loaded game object).",
+        "Replace the two silent empty catches (lines 156-160, 205-208) with ILogger<AdminController> LogWarning(ex, ...) including the offending AppId, and surface a skipped-count to the view.",
+        "Eliminate N+1: add IUserRepository.GetUserBySteamId for Delete, and batch-load identity users (or project a join) in ShowAllUsers instead of per-row FindByIdAsync."
+      ]
+    },
+    {
+      "feature": "Steam integration + resilience (SteamService, Polly, mapping, async wrappers)",
+      "verdict": "works-with-gaps",
+      "summary": "The async core of SteamService is genuinely working: every endpoint goes through GetJsonStringFromEndpointAsync, which catches exceptions, logs a redacted URI, and returns null; callers null-guard the deserialize result and return empty collections. The Polly resilience policy is correctly configured (3 retries, exponential backoff base 200ms, and an explicit OrResult for HTTP 429) on the named \"Steam\" HttpClient. TakeSteamPOCO is now null-safe (FirstOrDefault + early return), so a private/invalid steamid yields a blank User rather than a 500. However several prior-session claims are FALSE: the [Obsolete] sync-over-async wrappers were NOT deleted and remain actively referenced from CompeteController and Manage/Index (sync-over-async on request threads with unguarded .GetGAP()/.GetSchema()/.GetAchievements() null derefs that NRE on any API failure); GetManyUsersAsync has a real mapping/crash bug (RemoveAt(0) on a list that is shorter than steamIds when users are private -> ArgumentOutOfRangeException, and order-dependent mapping that mismatches users); and the API key is leaked unredacted in one log line (SteamService.cs:208). Steam calls also use plaintext http:// for owned-games/achievements endpoints.",
+      "gaps": [
+        {
+          "title": "GetManyUsersAsync mismaps users and crashes on private/missing players",
+          "severity": "P0",
+          "file": "Services/SteamService.cs:106-112",
+          "detail": "The loop calls userOut.TakeSteamPOCO(poco) (which always reads players.FirstOrDefault(), i.e. index 0) then poco?.response?.players?.RemoveAt(0), iterating steamIds.Count times. Steam's GetPlayerSummaries does NOT preserve request order and OMITS private/invalid steamids, so the returned players list is frequently shorter than steamIds. When players is exhausted, RemoveAt(0) on the empty list throws ArgumentOutOfRangeException; before that, every User is mapped to whatever the current head is, so users get the wrong identity. This feeds CompeteController.Details userList (line 129), corrupting scoreboards.",
+          "fix": "Deserialize once, build a dictionary keyed by steamid: var byId = poco?.response?.players?.ToDictionary(p => p.steamid) ?? new(); then foreach id in steamIds create a User and call a TakeSteamPOCO overload that accepts the single matching Player (or skip/placeholder when byId doesn't contain the id). Remove the RemoveAt(0)/FirstOrDefault head-consumption entirely. Add a unit test with 3 requested ids where Steam returns 2 players out of order."
+        },
+        {
+          "title": "Obsolete sync-over-async wrappers not deleted and still called on request threads",
+          "severity": "P0",
+          "file": "Services/SteamService.cs:411-509 / Controllers/CompeteController.cs:129,136,169,276,293,309,328,476",
+          "detail": "The [Obsolete] GetManyUsers/GetGAP/GetSchema/GetAchievements/GetGames wrappers (each calling .GetAwaiter().GetResult()) still exist on ISteamService and SteamService AND are invoked from CompeteController.Details/Initiate/Create and Areas/Identity/Pages/Account/Manage/Index.cshtml.cs:122. This is sync-over-async (thread-pool starvation / potential deadlock under load) and defeats the async/Polly path's benefits. The claim that these are 'deleted/unreferenced' is false.",
+          "fix": "Convert CompeteController.Details/Initiate/Create and Manage/Index handlers to async Task<IActionResult>, call the *Async overloads with await, then delete all [Obsolete] members from both ISteamService.cs and SteamService.cs. Rebuild to confirm zero references remain."
+        },
+        {
+          "title": "Unguarded null dereference of GetGAP/GetSchema/GetAchievements results -> 500 NRE",
+          "severity": "P0",
+          "file": "Controllers/CompeteController.cs:136,175,293,476",
+          "detail": "GetGAPAsync/GetSchemaAsync/GetAchievementsAsync return null on any API failure or deserialize error (SteamService.cs:392-407, 365-385, 311-331). CompeteController immediately chains .achievementpercentages.achievements (136), .playerstats.achievements (175), and .game.availableGameStats.achievements (293,476) with no null check, inside actions that have no try/catch. Any transient Steam outage that survives Polly's 3 retries produces an unhandled NullReferenceException -> 500 on the competition Details/Initiate pages.",
+          "fix": "After each Steam call, check for null and short-circuit to a friendly 'Steam data temporarily unavailable' view/empty result. Prefer the async overloads and pattern: var gap = await _steamService.GetGAPAsync(appId); var percentages = gap?.achievementpercentages?.achievements ?? new List<GlobalAchievement>();"
+        },
+        {
+          "title": "Steam API key leaked unredacted in failure log",
+          "severity": "P1",
+          "file": "Services/SteamService.cs:208",
+          "detail": "_logger.LogWarning(\"Failed to get games from source: {Source}\", source) logs the full owned-games URL, which contains key={_token} (or {_adminToken} for the curator path). RedactSecrets is applied inside GetJsonStringFromEndpointAsync but NOT here, so the real API key is written to logs on every games-fetch failure - exactly when ops will be reading logs.",
+          "fix": "Change to _logger.LogWarning(\"Failed to get games from source: {Source}\", RedactSecrets(source)); audit any other log statements that interpolate 'source' or full URIs (e.g. lines 208) and route them through RedactSecrets."
+        },
+        {
+          "title": "Plaintext http:// used for key-bearing Steam endpoints",
+          "severity": "P2",
+          "file": "Services/SteamService.cs:186,198,313",
+          "detail": "GetOwnedGames (186,198) and GetPlayerAchievements (313) are requested over http://, transmitting the API key (and steamid) in cleartext, while UseHttpsRedirection only governs inbound traffic, not these outbound calls. Other calls already use https.",
+          "fix": "Change these three URLs to https://api.steampowered.com/... ; Steam serves all of these over TLS."
+        },
+        {
+          "title": "No ownership/IDOR check on Steam API controller actions",
+          "severity": "P2",
+          "file": "Controllers/SteamController.cs:53-106",
+          "detail": "Endpoints like Games(userSteamId,userId), SharedGames, SteamFriends(steamid,userId), UserAchievements(steamid,appId) take a caller-supplied steamid/userId and proxy Steam data without verifying the value belongs to the authenticated user. With the global FallbackPolicy any authenticated user can enumerate friends/games/achievements for an arbitrary steamid. Data is public-ish via Steam, but it still lets the app be used as an unauthenticated-data oracle keyed off internal userId.",
+          "fix": "For actions scoped to 'me', derive steamid from the current user (_userManager.GetUserId -> UserRepository.SteamId) instead of trusting the query param, or validate that the passed steamid/userId matches the caller / a friend relationship before proxying."
+        }
+      ],
+      "deadOrFake": [
+        "Services/SteamService.cs:413-507 - 16 [Obsolete] sync wrappers (GetSteamUser/GetManyUsers/GetUserLevel/GetFriendsList/GetFriendSpecific/GetGames/GetSteamCuratorGames/GetGamesGeneric/GetSharedGames/GetGameInfo/GetGameNews/GetAchievements/GetSharedMissingAchievements/GetSchema/GetGAP/GetJsonStringFromEndpoint) - claimed deleted, still present and partly referenced",
+        "Services/SteamService.cs:87-93 - GetManyUsersAsync builds steamids=A,B,C, with a trailing comma (Steam tolerates it but it is unclean and a sign the loop was never properly tested)",
+        "Models/Friend.cs:45 - GameId mapping commented out (//GameId = userPOCOIn.gameid;) so Friend.GameId is never populated from Steam"
+      ],
+      "completionTasks": [
+        "Rewrite GetManyUsersAsync to deserialize once into a Dictionary keyed by steamid and map each requested id (placeholder when missing); delete the FirstOrDefault/RemoveAt(0) head-consumption logic; add a unit test covering out-of-order and missing (private) players.",
+        "Make CompeteController.Details/Initiate/Create and Manage/Index.cshtml.cs handlers async, switch all _steamService.GetX(...) calls to the await GetXAsync(...) overloads, and add null guards (?? empty) on every GetGAPAsync/GetSchemaAsync/GetAchievementsAsync result.",
+        "Delete all [Obsolete] sync members from ISteamService.cs and SteamService.cs after the callers are converted; rebuild to prove zero references remain.",
+        "Wrap the source argument at SteamService.cs:208 (and audit all URI/source log statements) in RedactSecrets so the API key never reaches logs.",
+        "Change the three http:// Steam URLs (lines 186, 198, 313) to https://.",
+        "Add ownership/relationship validation (or derive steamid from the authenticated user) on SteamController.Games/SharedGames/SteamFriends/UserAchievements/SpecificFriend instead of trusting client-supplied steamid/userId.",
+        "Decide on Friend.GameId: either restore the mapping at Friend.cs:45 or remove the dead property if 'currently in-game' info is unused."
+      ]
+    },
+    {
+      "feature": "Cross-cutting: security posture, dead code, and test suites",
+      "verdict": "works-with-gaps",
+      "summary": "The security baseline is genuinely solid: Program.cs registers a global authorization FallbackPolicy (RequireAuthenticatedUser) so every endpoint is authn-by-default, the Identity cookie is hardened (HttpOnly/SameSite/SlidingExpiry), an antiforgery header name is configured for AJAX, and /health is correctly AllowAnonymous. The previously-orphaned views (Views/Authentication, Views/User) and JS (hideGame.js, sum.js, qr.js) have actually been deleted. NUnit is real and green (84 passed, 0 skipped; UnitTest1.cs is now a genuine GapProcessorTests with assertions). BDD step defs assert real behavior via FluentAssertions + Selenium page objects. BUT three real gaps remain: (1) antiforgery is NOT global — only the 3 API ControllerBase controllers have it, so CompeteController's two [HttpPost] MVC actions are CSRF-vulnerable (and Initiate is self-documented as broken); (2) the JS test suite FAILS — sum_wwroot.test.js imports the deleted wwwroot/js/sum.js; (3) utils.js escapeHtml is dead code (never imported by any app JS), while the real XSS surface (Messages.js/competeCreatePage.js/achievements.js innerHTML interpolation) goes unescaped; plus an orphan CalculatorStepDefinitions.cs full of PendingStepException with no matching feature.",
+      "gaps": [
+        {
+          "title": "Antiforgery is not global; CompeteController POST actions are CSRF-vulnerable",
+          "severity": "P1",
+          "file": "src/SteamProject/Controllers/CompeteController.cs:404,429",
+          "detail": "Program.cs registers a global FallbackPolicy for authentication but never registers a global AutoValidateAntiforgeryTokenAttribute MVC filter. Antiforgery is only applied per-controller on SteamController.cs:15, MessagesController.cs:15, VoteController.cs:12, and explicitly on AdminController actions. CompeteController has [HttpPost] Initiate (line 404) and [HttpPost] Create (line 429) with no [ValidateAntiForgeryToken]/[AutoValidateAntiforgeryToken] at class or method level, so authenticated users can be CSRF'd into creating competitions. The E2E security.spec.js only checks antiforgery on /api/Steam/UpdateTheme, so this gap is untested.",
+          "fix": "Register antiforgery globally in Program.cs: builder.Services.AddControllersWithViews(o => o.Filters.Add(new AutoValidateAntiforgeryTokenAttribute())); This auto-validates all unsafe verbs while leaving GETs untouched. Then add an E2E case in security.spec.js POSTing to /Compete/Create without a token and asserting 400. (Initiate at line 404 is separately broken — see dead-code note — and should be removed or fixed before exposing it.)"
+        },
+        {
+          "title": "JavaScript test suite fails: references deleted wwwroot/js/sum.js",
+          "severity": "P1",
+          "file": "src/Javascript_Tests/tests/sum_wwroot.test.js:1",
+          "detail": "Running `npx jest` in src/Javascript_Tests yields: 1 failed, 1 passed. sum_wwroot.test.js does `import { sum } from '../../SteamProject/wwwroot/js/sum.js'` but wwwroot/js/sum.js was deleted during cleanup, so the suite fails with 'Cannot find module'. The package.json test script uses --passWithNoTests but that does not rescue an import error. So the JS test suite as a whole does NOT pass.",
+          "fix": "Delete src/Javascript_Tests/tests/sum_wwroot.test.js (and the stray src/Javascript_Tests/tests/sum.js helper) since the production sum.js is gone. Keep utils.test.js. Verify with `npx jest` returning all green."
+        },
+        {
+          "title": "escapeHtml (utils.js) is dead code while real XSS surface is unescaped",
+          "severity": "P1",
+          "file": "src/SteamProject/wwwroot/js/utils.js:121",
+          "detail": "escapeHtml and the rest of utils.js are an ES module that is never imported by any app JS and never loaded via a <script> tag in any view (grep for 'utils' in Views/ and wwwroot/js/ returns nothing). It exists only to be exercised by utils.test.js. Meanwhile the actual rendering paths build DOM via innerHTML string interpolation with unescaped server/user data: Messages.js:59,145,155 (contact name/nickname/message), competeCreatePage.js:80,116 (steamName), achievements.js:80 (displayName). These are live stored-XSS vectors that escapeHtml was presumably meant to defend but does not.",
+          "fix": "Either import escapeHtml into Messages.js/competeCreatePage.js/achievements.js and wrap every interpolated user/Steam-derived value (e.g. `${escapeHtml(contact.name)}`), or switch those to textContent/createElement. Then load utils.js as a module from the relevant views so it is no longer orphaned. If you choose textContent, delete utils.js + utils.test.js as dead code."
+        },
+        {
+          "title": "Orphan BDD CalculatorStepDefinitions full of PendingStepException",
+          "severity": "P3",
+          "file": "src/BDD_Tests/StepDefinitions/CalculatorStepDefinitions.cs:17",
+          "detail": "CalculatorStepDefinitions.cs is the SpecFlow scaffolding template: all four steps (GivenTheFirstNumberIs, GivenTheSecondNumberIs, WhenTheTwoNumbersAreAdded, ThenTheResultShouldBe) throw new PendingStepException() with TODO comments. There is no Calculator.feature in BDD_Tests/Features, so these bindings are unreachable dead code. HelloWorldStepDefinitions.cs is also template scaffolding but at least has a real assertion and a matching HelloWorld.feature.",
+          "fix": "Delete src/BDD_Tests/StepDefinitions/CalculatorStepDefinitions.cs. Optionally also remove the HelloWorld feature/steps if you do not want a placeholder smoke scenario in the suite."
+        },
+        {
+          "title": "InboxController returns a viewless View() and lacks explicit [Authorize]",
+          "severity": "P3",
+          "file": "src/SteamProject/Controllers/InboxController.cs:33",
+          "detail": "InboxController has no [Authorize] (relies on the global FallbackPolicy, which is OK) and no [AutoValidateAntiforgeryToken] (it has no POST actions, so OK). But Index() at line 30-34: if _userManager.GetUserId(User) is null it returns View() with no model, while line 37 returns View(userMessages) — the no-model branch will NRE in the .cshtml if it expects List<InboxMessage>. Under the FallbackPolicy an unauthenticated request is redirected before reaching the action, so the null branch is effectively dead, but it is a latent bug and misleading.",
+          "fix": "Remove the dead null-id branch (the FallbackPolicy guarantees an authenticated user) or return RedirectToAction to login. Add [Authorize] explicitly for defense-in-depth/readability even though the fallback covers it."
+        },
+        {
+          "title": "E2E and BDD suites cannot self-run in plain CI (no auto-started web server)",
+          "severity": "P2",
+          "file": "src/E2E_Tests/playwright.config.js:7",
+          "detail": "playwright.config.js has no `webServer` block; it assumes the app is already running at localhost:5105 (comment: 'the autonomous harness manages the dotnet process separately'). BDD's AppServerHooks.cs:18 auto-starts the app locally but explicitly skips startup when CI/GITHUB_ACTIONS is set, assuming a deployed app, and its scenarios require real Steam login + user-secrets (SeedUserPW) to pass. So neither browser suite is push-button runnable in a clean CI without external orchestration and secrets; only NUnit runs unattended.",
+          "fix": "Add a `webServer` entry to playwright.config.js (command: 'dotnet run --project ../SteamProject', url: BASE_URL, reuseExistingServer: !process.env.CI) so Playwright boots the app. For BDD, gate CI on a deployed URL via config and document required user-secrets, or mark Steam-dependent scenarios with a tag excluded in CI."
+        }
+      ],
+      "deadOrFake": [
+        "src/SteamProject/wwwroot/js/utils.js:1-149 — entire module (escapeHtml et al.) is never imported by app JS or loaded in any view; exercised only by utils.test.js",
+        "src/Javascript_Tests/tests/sum_wwroot.test.js:1 — imports deleted wwwroot/js/sum.js; suite fails to run",
+        "src/Javascript_Tests/tests/sum.js:1 — stray helper paired with the broken sum test",
+        "src/BDD_Tests/StepDefinitions/CalculatorStepDefinitions.cs:17,25,33,41 — four PendingStepException template stubs, no matching feature file",
+        "src/SteamProject/Controllers/CompeteController.cs:406-424 — Initiate POST self-documented 'This method is broken and will not save competitions anymore' / 'Fails on saving competitions to the database here due to some values being null'",
+        "src/SteamProject/Controllers/InboxController.cs:33 — dead View() branch (unreachable behind FallbackPolicy) that would NRE if hit",
+        "src/SteamProject/Controllers/CalculatorStepDefinitions equivalent — n/a"
+      ],
+      "completionTasks": [
+        "Register a global AutoValidateAntiforgeryTokenAttribute via AddControllersWithViews filters in Program.cs so CompeteController and all MVC POSTs are CSRF-protected, not just the 3 API controllers.",
+        "Delete src/Javascript_Tests/tests/sum_wwroot.test.js and tests/sum.js; rerun `npx jest` and confirm an all-green suite.",
+        "Resolve escapeHtml: either wire it into Messages.js/competeCreatePage.js/achievements.js innerHTML interpolations (loading utils.js in the relevant views) or convert those sinks to textContent and delete utils.js + utils.test.js. Add a JS test for the escaping path.",
+        "Delete orphan src/BDD_Tests/StepDefinitions/CalculatorStepDefinitions.cs (and optionally HelloWorld template).",
+        "Fix CompeteController.Initiate (line 404): either repair the broken save logic or remove the action and its route; do not ship a [HttpPost] that is documented as non-functional.",
+        "Clean up InboxController.Index dead null branch and add explicit [Authorize] for readability/defense-in-depth.",
+        "Add a `webServer` block to playwright.config.js and a CI-aware BDD startup path (or deployed-URL gating + documented secrets) so the browser suites are runnable unattended.",
+        "Add an E2E case asserting /Compete/Create POST without an antiforgery token returns 400, closing the test gap for the new global antiforgery filter."
+      ]
+    }
+  ]
+}

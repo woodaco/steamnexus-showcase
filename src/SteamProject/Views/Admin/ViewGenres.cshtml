@@ -1,0 +1,66 @@
+@model List<SteamProject.Models.Igdbgenre>
+@{
+    ViewData["Title"] = "Admin - View Genres";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/Admin.css" asp-append-version="true">
+</head>
+<div class="container admin-container">
+    <main role="main" class="pb-3">
+        <div class="admin-header">
+            <h1>Admin Dashboard</h1>
+            <h2>View All Genres</h2>
+        </div>
+        <hr>
+        <div class="row">
+            @Html.Partial("AdminNavigation")
+            <div class="col-md-9">
+                <div class="admin-card">
+                    <h3 class="admin-card-title">Genre List (@Model.Count total)</h3>
+                    <p class="admin-card-content">
+                        These are all the genres currently stored in the database.
+                        Use "Cleanup Genre Data" to remove duplicates and fix any with stray quote characters.
+                    </p>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Genre Name</th>
+                                    <th>Issues</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var genre in Model)
+                                {
+                                    var hasQuotes = genre.Name.Contains('"') || genre.Name.Contains('\'');
+                                    var isDuplicate = Model.Count(g => g.Name.Trim().Trim('"', '\'') == genre.Name.Trim().Trim('"', '\'')) > 1;
+                                    <tr class="@(hasQuotes || isDuplicate ? "table-warning" : "")">
+                                        <td>@genre.Id</td>
+                                        <td>
+                                            @genre.Name
+                                            @if (hasQuotes)
+                                            {
+                                                <span class="badge bg-danger ms-2">Has Quotes</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (isDuplicate)
+                                            {
+                                                <span class="badge bg-warning text-dark">Possible Duplicate</span>
+                                            }
+                                            @if (!hasQuotes && !isDuplicate)
+                                            {
+                                                <span class="badge bg-success">OK</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>

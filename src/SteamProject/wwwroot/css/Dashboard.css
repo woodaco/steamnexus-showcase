@@ -1,0 +1,370 @@
+/* Dashboard Page Styles */
+
+body {
+    font-family: var(--font-primary);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+}
+
+h1 {
+    margin-top: var(--space-5);
+    margin-bottom: var(--space-3);
+    text-align: center;
+}
+
+h3 {
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-2);
+    color: var(--color-primary-start);
+}
+
+h4 {
+    font-size: var(--fs-xl);
+    margin-bottom: var(--space-2);
+}
+
+h6 {
+    text-align: center;
+}
+
+.center {
+    text-align: center;
+    justify-content: center;
+    margin: auto;
+    display: block;
+}
+
+p {
+    margin-bottom: var(--space-3);
+}
+
+/* User Avatar Section */
+#userAvatar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.user-avatar {
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    width: 70%;
+    position: relative;
+    padding-top: var(--space-3);
+}
+
+/* Badges Section */
+.badges-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: var(--space-4);
+    max-height: 325px;
+    overflow: auto;
+    gap: var(--space-2);
+}
+
+.badge-card {
+    position: relative;
+}
+
+.badge-button-img {
+    outline: none;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 0;
+}
+
+.badge-button-img:hover,
+.badge-button-img:focus,
+.badge-button-img:active {
+    outline: none;
+    border: none;
+    box-shadow: none;
+}
+
+.badge-img {
+    outline: none;
+    border-radius: var(--radius-full);
+    max-width: 3.5rem;
+    max-height: 3.5rem;
+    padding: 0;
+    margin: 0;
+    transition: box-shadow var(--transition-normal);
+}
+
+.badge-img:hover,
+.badge-img:active {
+    box-shadow: var(--shadow-glow-primary);
+}
+
+.badge-description {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-primary);
+    padding: var(--space-2);
+    font-size: var(--fs-sm);
+}
+
+/* Card Styling */
+.card-img-top {
+    text-align: center;
+    height: 226px;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    object-fit: cover;
+}
+
+.threecol {
+    max-width: 25rem;
+    padding: var(--space-1);
+}
+
+.userCard {
+    text-align: center;
+    justify-content: center;
+    margin-top: 0;
+    border-radius: var(--radius-lg);
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    transition: var(--transition-normal);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+}
+
+.userCard:hover {
+    outline: 3px solid var(--color-primary-start);
+    outline-style: ridge;
+    cursor: pointer;
+    box-shadow: var(--shadow-glow-primary);
+}
+
+.userCard .card-body {
+    padding: var(--space-3);
+}
+
+.userCard .card-title {
+    color: var(--color-text-primary);
+    font-weight: var(--fw-semibold);
+}
+
+/* Follow Card (Modal) */
+.followCard {
+    text-align: center;
+    justify-content: center;
+    background: transparent;
+    padding: var(--space-2);
+    border: none;
+    border-radius: var(--radius-lg);
+}
+
+.followCard img {
+    border-radius: var(--radius-lg);
+}
+
+.followCard .card-body {
+    padding: var(--space-2);
+}
+
+.followCard .card-title {
+    font-size: var(--fs-base);
+    color: var(--color-text-primary);
+}
+
+/* Show More Button */
+.show-btn {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    border-radius: var(--radius-md);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.userCard:hover .show-btn {
+    opacity: 1;
+}
+
+/* Follow Button */
+.follow-btn {
+    position: absolute;
+    bottom: var(--space-2);
+    right: var(--space-2);
+    border-radius: var(--radius-md);
+}
+
+/* Followed Games Button */
+.show-followed-btn {
+    width: 70%;
+    border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+    margin-bottom: var(--space-5);
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+    border: none;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--fs-lg);
+    transition: var(--transition-normal);
+}
+
+.show-followed-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-btn-primary-hover);
+}
+
+/* Carousel Styling */
+#recentGamesCarousel,
+#followedGamesCarousel {
+    width: 100%;
+}
+
+.carousel-item {
+    width: 100%;
+}
+
+.carousel-control-prev-icon {
+    border-radius: 25% 0 0 25%;
+    height: 6rem;
+    padding: var(--space-1);
+    margin-left: -1.25rem;
+    background-color: var(--color-primary-start);
+}
+
+.carousel-control-next-icon {
+    border-radius: 0 25% 25% 0;
+    height: 6rem;
+    padding: var(--space-1);
+    margin-right: -1.25rem;
+    background-color: var(--color-primary-start);
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    width: auto;
+    opacity: 0.8;
+    transition: opacity var(--transition-fast);
+}
+
+.carousel-control-prev:hover,
+.carousel-control-prev:focus,
+.carousel-control-next:hover,
+.carousel-control-next:focus {
+    opacity: 1;
+}
+
+.carousel-inner {
+    border: 3px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    justify-content: center;
+    width: 100%;
+    background: var(--color-bg-dark-2);
+}
+
+/* Todo Button */
+#toDoButton {
+    outline: none;
+    border: none;
+    margin-top: -5px;
+    background: transparent;
+}
+
+#toDoButton:focus,
+#toDoButton:active,
+#toDoButton:hover {
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+/* Modal */
+.modal-lg {
+    border-radius: var(--radius-xl);
+    width: 100%;
+}
+
+.followModal {
+    width: 100%;
+}
+
+/* News Container */
+.news-container {
+    margin-left: 0;
+    transition: height var(--transition-slow);
+    overflow: hidden;
+}
+
+/* Competition Cards */
+.competition-userCard {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    padding-bottom: var(--space-3);
+}
+
+.competition-img-top {
+    width: 100%;
+    box-shadow: 0 -4px 0 var(--color-primary-start);
+    transition: var(--transition-normal);
+}
+
+.competition-img-top:hover {
+    outline: 5px solid var(--color-primary-start);
+    cursor: pointer;
+}
+
+.competition-card-title {
+    justify-content: center;
+    text-align: center;
+    font-size: var(--fs-2xl);
+    font-family: var(--font-primary);
+    color: var(--color-text-primary);
+    padding: var(--space-3);
+}
+
+.competition-details {
+    justify-content: center;
+    text-align: center;
+    margin: auto;
+    padding: var(--space-2);
+    color: var(--color-text-secondary);
+}
+
+.competition-card-body {
+    padding: var(--space-2);
+    word-spacing: 2px;
+    box-shadow: 0 -5px 0 var(--color-primary-start);
+}
+
+/* Countdown Canvas */
+canvas {
+    background-color: rgba(35, 41, 52, 0.9);
+    border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+    outline: 3px solid var(--color-primary-start);
+    position: absolute;
+    justify-content: center;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    transition: var(--transition-slow);
+}
+
+/* Utility Classes */
+.show-follow-btn {
+    display: block;
+    position: relative;
+    break-inside: avoid-column;
+}
+
+/* Modal Header Styling */
+#followModalHeader {
+    background: var(--color-primary);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+#followModalHeader h3 {
+    color: var(--color-text-primary);
+    margin: 0;
+}

@@ -1,0 +1,55 @@
+<div class="col-md-3">
+    <nav class="admin-nav">
+        <div class="admin-nav-section">
+            <div class="admin-nav-section-label">Views</div>
+            <ul class="admin-nav-list">
+                <li class="admin-nav-item">
+                    <a class="admin-nav-link" href='@Url.Action("ShowAllUsers", "Admin")'>
+                        <i class="bi bi-people"></i> User List
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a class="admin-nav-link" href='@Url.Action("ViewGames", "Admin")'>
+                        <i class="bi bi-controller"></i> Game List
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a class="admin-nav-link" href='@Url.Action("ViewGenres", "Admin")'>
+                        <i class="bi bi-tags"></i> Genres
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a class="admin-nav-link" href='@Url.Action("ViewBannedIds", "Admin")'>
+                        <i class="bi bi-shield-x"></i> Banned Ids
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="admin-nav-section">
+            <div class="admin-nav-section-label">Actions</div>
+            <ul class="admin-nav-list">
+                <li class="admin-nav-item">
+                    <form method="post" asp-action="LoadGames" asp-controller="Admin" style="margin: 0;" onsubmit="return confirm('This will fetch and preload games from Steam. This may take a while. Continue?');">
+                        <button type="submit" class="admin-nav-link admin-action">
+                            <i class="bi bi-cloud-download"></i> Preload Games
+                        </button>
+                    </form>
+                </li>
+                <li class="admin-nav-item">
+                    <form method="post" asp-action="LoadGameInfo" asp-controller="Admin" style="margin: 0;" onsubmit="return confirm('This will fetch detailed info for all games. This may take a long time depending on how many games need updating. Continue?');">
+                        <button type="submit" class="admin-nav-link admin-action">
+                            <i class="bi bi-info-circle"></i> Load Game Info
+                        </button>
+                    </form>
+                </li>
+                <li class="admin-nav-item">
+                    <form method="post" asp-action="CleanupGenres" asp-controller="Admin" style="margin: 0;" onsubmit="return confirm('This will clean up duplicate genres and remove stray quote characters from the database. Continue?');">
+                        <button type="submit" class="admin-nav-link admin-action">
+                            <i class="bi bi-wrench"></i> Cleanup Genres
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>

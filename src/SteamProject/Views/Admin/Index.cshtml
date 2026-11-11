@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "Admin - Management Dashboard";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/Admin.css" asp-append-version="true">
+</head>
+<div class="container admin-container">
+    <main role="main" class="pb-3">
+        <div class="admin-header">
+            <h1>Admin Dashboard</h1>
+            <h2>Manage the site via Admin Controls</h2>
+        </div>
+        <hr>
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success" role="alert">
+                <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            </div>
+        }
+        <div class="row">
+            @Html.Partial("AdminNavigation")
+            <div class="col-md-9">
+                <div class="row" id="admin-metrics">
+                    <div class="col-6 col-md-3 mb-3">
+                        <div class="admin-card text-center">
+                            <h3 class="admin-card-title" id="metric-users">@ViewData["UserCount"]</h3>
+                            <p class="admin-card-content">Users</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 mb-3">
+                        <div class="admin-card text-center">
+                            <h3 class="admin-card-title" id="metric-games">@ViewData["GameCount"]</h3>
+                            <p class="admin-card-content">Games</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 mb-3">
+                        <div class="admin-card text-center">
+                            <h3 class="admin-card-title" id="metric-genres">@ViewData["GenreCount"]</h3>
+                            <p class="admin-card-content">Genres</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 mb-3">
+                        <div class="admin-card text-center">
+                            <h3 class="admin-card-title" id="metric-banned">@ViewData["BannedCount"]</h3>
+                            <p class="admin-card-content">Banned</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-card">
+                    <h3 class="admin-card-title">Welcome to the Admin Dashboard</h3>
+                    <p class="admin-card-content">Select an option from the navigation menu to begin administering the site.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>

@@ -1,0 +1,248 @@
+name: Build, Test, and Deploy to Azure
+
+# build-test runs on every pull request and on every push to any branch.
+# deploy runs only on a push to main, and only after build-test passes.
+# coverage-badge checks the committed README coverage badge against this run's coverage.
+# bdd-smoke runs the BDD suite against the freshly deployed site and needs the
+# SEED_USER_PW repository secret; it fails, never skips, when the site or secret is missing.
+# Nothing here is allowed to fail quietly: every step that fails, fails the run.
+on:
+  push:
+    branches: [ "**" ]
+    paths-ignore:
+      - ".github/workflows/app-diagnostics.yml"
+      - "**.md"
+      - "docs/**"
+  pull_request:
+    paths-ignore:
+      - ".github/workflows/app-diagnostics.yml"
+      - "**.md"
+      - "docs/**"
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: SteamNexus
+  AZURE_WEBAPP_PACKAGE_PATH: src/SteamProject/publish
+  CONFIGURATION: Release
+  DOTNET_CORE_VERSION: 8.0.x
+  WORKING_DIRECTORY: src/SteamProject
+  TEST_PROJECT: src/NUnit_Tests
+  BDD_TEST_PROJECT: src/BDD_Tests
+  NODE_VERSION: 20.x
+  REPORTGENERATOR_VERSION: 5.3.11
+
+# A newer push supersedes an older run: cancel it instead of letting its smoke test fail
+# against a container the newer deploy is restarting.
+concurrency:
+  group: steamnexus-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Restore .NET dependencies
+      run: |
+        dotnet restore ${{ env.WORKING_DIRECTORY }}
+        dotnet restore ${{ env.TEST_PROJECT }}
+        dotnet restore ${{ env.BDD_TEST_PROJECT }}
+
+    - name: Build main project
+      run: dotnet build ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-restore
+
+    - name: Build unit test project
+      run: dotnet build ${{ env.TEST_PROJECT }} --configuration ${{ env.CONFIGURATION }} --no-restore
+
+    # The BDD suite runs against the deployed site after deploy, but it must
+    # compile on every change, in the same configuration it is run in.
+    - name: Build BDD test project
+      run: dotnet build ${{ env.BDD_TEST_PROJECT }} --configuration ${{ env.CONFIGURATION }} --no-restore
+
+    - name: Run C# unit tests with coverage
+      run: >
+        dotnet test ${{ env.TEST_PROJECT }}
+        --configuration ${{ env.CONFIGURATION }}
+        --no-build
+        --verbosity normal
+        --logger "trx;LogFileName=test-results.trx"
+        --collect:"XPlat Code Coverage"
+        --results-directory ${{ github.workspace }}/TestResults
+
+    - name: Generate coverage report
+      if: always()
+      run: |
+        dotnet tool install --global dotnet-reportgenerator-globaltool --version ${{ env.REPORTGENERATOR_VERSION }}
+        reportgenerator \
+          "-reports:${{ github.workspace }}/TestResults/**/coverage.cobertura.xml" \
+          "-targetdir:${{ github.workspace }}/coverage" \
+          "-reporttypes:HtmlSummary;MarkdownSummaryGithub;Badges"
+        cat "${{ github.workspace }}/coverage/SummaryGithub.md" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload test results and coverage
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-and-coverage
+        path: |
+          ${{ github.workspace }}/TestResults/
+          ${{ github.workspace }}/coverage/
+
+    - name: Install JavaScript dependencies
+      working-directory: src/Javascript_Tests
+      run: npm ci
+
+    - name: Run JavaScript tests
+      working-directory: src/Javascript_Tests
+      run: npm test
+
+    - name: Publish
+      run: dotnet publish ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+    - name: Upload web app package
+      uses: actions/upload-artifact@v4
+      with:
+        name: webapp
+        path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+  # The README shows docs/badges/coverage.svg, a committed file so it has a stable URL on
+  # any mirror. This job fails the run when that badge no longer matches what the tests
+  # measure. It is a separate job so a stale badge turns the run red without blocking deploy.
+  coverage-badge:
+    name: Coverage Badge Is Current
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download test results and coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: test-results-and-coverage
+        path: ${{ github.workspace }}/artifact
+
+    - name: Compare committed badge with this run
+      run: |
+        fresh=$(find "${{ github.workspace }}/artifact" -name 'badge_linecoverage.svg' | head -n 1)
+        if [ -z "$fresh" ]; then echo "::error::No line coverage badge was generated."; exit 1; fi
+        pct() { grep -oE '[0-9]+(\.[0-9]+)?%' "$1" | tail -n 1 | tr -d '%' | cut -d. -f1; }
+        have=$(pct docs/badges/coverage.svg); want=$(pct "$fresh")
+        echo "committed badge: ${have:-?}%  this run: ${want:-?}%" | tee -a "$GITHUB_STEP_SUMMARY"
+        if [ -z "$have" ] || [ -z "$want" ] || [ $(( have > want ? have - want : want - have )) -gt 1 ]; then
+          echo "::error file=docs/badges/coverage.svg::Coverage badge is stale (committed ${have:-?}%, measured ${want:-?}%). Run scripts/update-coverage-badge.sh and commit the result."
+          exit 1
+        fi
+        echo "Committed coverage badge is within 1 point of this run."
+
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+    needs: build-test
+    if: github.repository == 'woodaco/SteamNexus' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+    - name: Download web app package
+      uses: actions/download-artifact@v4
+      with:
+        name: webapp
+        path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.SteamProjectapi_SPN }}
+
+    - name: Deploy to Azure WebApp
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+    - name: Azure Logout
+      if: always()
+      run: az logout
+
+  bdd-smoke:
+    name: BDD Tests Against Deployed Site
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.repository == 'woodaco/SteamNexus' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      BDD_BASE_URL: https://steamnexus.azurewebsites.net
+      # Password of the seeded test user. It is read from the App Service setting SeedUserPW
+      # (the same value the deployed site seeds with) using the deploy service principal, so
+      # no second copy of the secret has to live in GitHub. Every BDD configuration builder
+      # reads user-secrets and then environment variables, so the env var reaches the steps.
+      # Azure cold starts can take minutes; the hooks wait this long, then FAIL (never skip).
+      BDD_SERVER_WAIT_SECONDS: "300"
+    steps:
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.SteamProjectapi_SPN }}
+
+    - name: Read the seeded test-user password from the App Service settings
+      run: |
+        rg=$(az webapp list --query "[?name=='${{ env.AZURE_WEBAPP_NAME }}'].resourceGroup" -o tsv)
+        pw=$(az webapp config appsettings list -n "${{ env.AZURE_WEBAPP_NAME }}" -g "$rg" --query "[?name=='SeedUserPW'].value" -o tsv)
+        if [ -z "$pw" ]; then
+          echo "::error::App setting SeedUserPW is not set on ${{ env.AZURE_WEBAPP_NAME }}; the BDD smoke tests cannot sign in."
+          exit 1
+        fi
+        echo "::add-mask::$pw"
+        echo "SeedUserPW=$pw" >> "$GITHUB_ENV"
+        az logout
+
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
+
+    - name: Setup Chrome
+      uses: browser-actions/setup-chrome@v1
+      with:
+        chrome-version: stable
+
+    - name: Restore BDD test dependencies
+      run: dotnet restore ${{ env.BDD_TEST_PROJECT }}
+
+    - name: Build BDD tests
+      run: dotnet build ${{ env.BDD_TEST_PROJECT }} --configuration ${{ env.CONFIGURATION }} --no-restore
+
+    - name: Run BDD tests
+      run: >
+        dotnet test ${{ env.BDD_TEST_PROJECT }}
+        --configuration ${{ env.CONFIGURATION }}
+        --no-build
+        --verbosity normal
+        --logger "trx;LogFileName=bdd-test-results.trx"
+
+    # A green job with zero executed scenarios is a quiet pass. Refuse it.
+    - name: Require at least one executed BDD test
+      run: |
+        trx=$(find ${{ env.BDD_TEST_PROJECT }}/TestResults -name 'bdd-test-results.trx' | head -n 1)
+        if [ -z "$trx" ]; then echo "::error::No BDD trx file was produced."; exit 1; fi
+        executed=$(grep -o 'executed="[0-9]*"' "$trx" | head -n 1 | grep -o '[0-9]*')
+        passed=$(grep -o 'passed="[0-9]*"' "$trx" | head -n 1 | grep -o '[0-9]*')
+        echo "BDD tests executed: ${executed:-0}, passed: ${passed:-0}" | tee -a "$GITHUB_STEP_SUMMARY"
+        if [ "${executed:-0}" -eq 0 ]; then echo "::error::0 BDD tests executed."; exit 1; fi
+
+    - name: Upload BDD test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: bdd-test-results
+        path: ${{ env.BDD_TEST_PROJECT }}/TestResults/

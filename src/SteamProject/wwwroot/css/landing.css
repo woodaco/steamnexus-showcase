@@ -1,0 +1,367 @@
+/*
+ * SteamNexus landing page (portfolio version).
+ * Text inherits the theme's body colour (light-theme.css / dark-theme.css), so contrast holds in
+ * both themes; accents come from design-tokens.css. No carousel, no auto-playing motion.
+ */
+
+.landing {
+    font-family: var(--font-primary);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-4) var(--space-10);
+}
+
+/* ========================================
+   HERO
+   ======================================== */
+.land-hero {
+    text-align: center;
+    padding: var(--space-10) 0 var(--space-8);
+    max-width: 920px;
+    margin: 0 auto;
+}
+
+.land-eyebrow {
+    display: inline-block;
+    margin: 0 0 var(--space-4);
+    padding: var(--space-1) var(--space-4);
+    border: 1px solid var(--color-border-accent);
+    border-radius: var(--radius-full);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    letter-spacing: 0.02em;
+}
+
+.land-title {
+    font-size: clamp(1.75rem, 5vw, 3rem);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-tight);
+    margin: 0 auto var(--space-5);
+    overflow-wrap: break-word;
+}
+
+.land-lede {
+    font-size: clamp(1rem, 2.4vw, 1.2rem);
+    line-height: var(--lh-relaxed);
+    margin: 0 auto var(--space-6);
+    max-width: 760px;
+}
+
+.land-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+}
+
+.land-btn,
+.land-btn:hover,
+.land-btn:focus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius-full);
+    font-weight: var(--fw-semibold);
+    text-decoration: none;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* White on the darker end of the brand gradient: well above 4.5:1. */
+.land-btn-primary,
+.land-btn-primary:hover,
+.land-btn-primary:focus {
+    background: linear-gradient(135deg, #4c5fd5 0%, #5e3a8c 100%);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-btn-primary);
+}
+
+.land-btn-secondary,
+.land-btn-secondary:hover,
+.land-btn-secondary:focus {
+    color: inherit;
+    border: 2px solid var(--color-primary-start);
+    background: transparent;
+}
+
+.land-btn:hover {
+    transform: translateY(-2px);
+}
+
+.land-btn:focus-visible {
+    outline: 3px solid var(--color-accent-cyan);
+    outline-offset: 3px;
+}
+
+/* ========================================
+   SECTIONS
+   ======================================== */
+.land-section {
+    padding: var(--space-8) 0;
+    scroll-margin-top: calc(var(--navbar-height, 70px) + var(--space-4));
+}
+
+.land-h2 {
+    font-size: clamp(1.5rem, 3.5vw, 2rem);
+    font-weight: var(--fw-bold);
+    text-align: center;
+    margin: 0 0 var(--space-4);
+}
+
+.land-note {
+    max-width: 760px;
+    margin: 0 auto var(--space-6);
+    text-align: center;
+    line-height: var(--lh-relaxed);
+}
+
+/* ========================================
+   FEATURE CARDS
+   ======================================== */
+.feature-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.feature-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+    border: 1px solid rgba(102, 126, 234, 0.25);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6) var(--space-4);
+}
+
+/* The icon is a glyph, so the circle is a flex box that centres it on both axes. */
+.feature-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 64px;
+    height: 64px;
+    margin-bottom: var(--space-4);
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    box-shadow: var(--shadow-md);
+    color: var(--color-text-primary);
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.feature-card-icon .bi::before {
+    /* bootstrap-icons sets vertical-align: -.125em, which pulls the glyph off-centre. */
+    vertical-align: 0;
+    line-height: 1;
+}
+
+.feature-card-title {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    margin-bottom: var(--space-2);
+}
+
+.feature-card-text {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-relaxed);
+    margin: 0;
+}
+
+/* ========================================
+   SCREENSHOTS
+   ======================================== */
+.shot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-5);
+}
+
+.shot {
+    margin: 0;
+    border: 1px solid var(--color-border-accent);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+}
+
+.shot-link {
+    display: block;
+}
+
+.shot-link:focus-visible {
+    outline: 3px solid var(--color-accent-cyan);
+    outline-offset: -3px;
+}
+
+.shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    object-position: top center;
+}
+
+.shot figcaption {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    border-top: 1px solid var(--color-border-accent);
+}
+
+/* ========================================
+   MY ROLE
+   ======================================== */
+.draft-tag {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: var(--space-2);
+    padding: 2px var(--space-3);
+    border: 1px dashed currentColor;
+    border-radius: var(--radius-full);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-5);
+}
+
+.role-card {
+    border: 1px solid var(--color-border-accent);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+}
+
+.role-title {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    margin: 0 0 var(--space-3);
+}
+
+.role-list {
+    margin: 0;
+    padding-left: var(--space-5);
+    line-height: var(--lh-relaxed);
+}
+
+.role-list li + li {
+    margin-top: var(--space-2);
+}
+
+/* ========================================
+   BUILT WITH
+   ======================================== */
+.stack {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.stack-row {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: var(--space-4);
+    align-items: start;
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-border-accent);
+}
+
+.stack-row dt {
+    font-weight: var(--fw-semibold);
+    padding-top: var(--space-1);
+}
+
+.stack-row dd {
+    margin: 0;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.chips li {
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--color-border-accent-hover, var(--color-border-accent));
+    border-radius: var(--radius-full);
+    font-size: var(--fs-sm);
+}
+
+@media (max-width: 576px) {
+    .stack-row {
+        grid-template-columns: 1fr;
+        gap: var(--space-2);
+    }
+}
+
+/* ========================================
+   SOURCE + CONTACT
+   ======================================== */
+.land-footer-note {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.source-note {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    padding: var(--space-3) var(--space-5);
+    border: 1px solid var(--color-border-accent);
+    border-radius: var(--radius-full);
+    font-size: var(--fs-sm);
+}
+
+.source-note .bi {
+    font-size: 1.25rem;
+}
+
+.land-contact {
+    margin: 0;
+}
+
+.land-contact a {
+    color: inherit;
+    font-weight: var(--fw-semibold);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .land-btn {
+        transition: none;
+    }
+    .land-btn:hover {
+        transform: none;
+    }
+}
+
+/* "Try the demo" posts a form (sign-in is a POST), so the form must sit in the button row like a link. */
+.land-demo-form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.land-demo-form .land-btn {
+    cursor: pointer;
+    font: inherit;
+    font-weight: var(--fw-semibold);
+}

@@ -1,0 +1,243 @@
+/* Friend Index Page (Compare Games) */
+
+.friendGameCard {
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-normal);
+    width: 40%;
+}
+
+.friendGameCard:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Friend Card */
+.friendDiv {
+    transition: var(--transition-normal);
+}
+
+.friendCard {
+    background: linear-gradient(to bottom right, var(--color-bg-dark-2), var(--color-bg-dark-3), var(--color-bg-dark-2));
+    border: none;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: var(--transition-normal);
+}
+
+.friendCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow-primary);
+}
+
+.friendCard .card-img-top {
+    height: 215px;
+    object-fit: cover;
+}
+
+.friendCard .card-body {
+    padding: var(--space-3);
+}
+
+.friendCard .card-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--color-text-primary);
+    font-weight: var(--fw-medium);
+}
+
+/* Friend Avatar */
+.friend-avatar {
+    border: 5px solid var(--color-primary-start);
+    border-style: outset;
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Modal Styling */
+.close {
+    background: none;
+    border: none;
+}
+
+.modal-content {
+    border: none;
+    border-radius: var(--radius-xl);
+    background-color: var(--color-bg-dark-3);
+    background-image: url('../assets/steam_gradient.png');
+}
+
+.modal-header {
+    border-bottom: none;
+    justify-content: flex-end;
+}
+
+.modal-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-container {
+    height: 30rem;
+}
+
+.modal-img {
+    align-self: flex-end;
+    height: 250px;
+    width: 166px;
+    border: 3px solid var(--color-accent-cyan);
+    border-radius: var(--radius-md);
+}
+
+/* Headings */
+h1, h4, h5, h6 {
+    color: var(--color-text-primary);
+    align-self: flex-start;
+}
+
+/* Modal Left Section */
+#modal-left {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.earned-label {
+    white-space: nowrap;
+    flex-wrap: wrap;
+    height: fit-content;
+    color: var(--color-text-primary);
+}
+
+/* Progress Bar */
+.progress {
+    background-color: rgba(255, 255, 255, 0.2);
+    width: 200px;
+    height: 10px;
+    border-radius: var(--radius-full);
+}
+
+.progress-value {
+    background: var(--color-primary);
+    position: absolute;
+    height: 10px;
+    border-radius: var(--radius-full);
+}
+
+/* Modal Right Section */
+#modal-right {
+    height: 368px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+#ach-row {
+    align-items: flex-end;
+}
+
+/* Achievement Styles */
+.ach-name {
+    color: var(--color-text-primary);
+    font-size: var(--fs-xs);
+    white-space: pre-line;
+}
+
+.ach-img {
+    height: 64px;
+    width: 64px;
+    border-radius: var(--radius-md);
+}
+
+.col-md-3 .ach-col {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.ach-col {
+    margin-bottom: var(--space-4);
+}
+
+.unearned {
+    opacity: 0.4;
+}
+
+/* Compare Modal Specific */
+#compareModalHeader {
+    background: var(--color-primary);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+#informationRow {
+    height: 100%;
+    width: 100%;
+}
+
+#gameImageCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+#gameImage {
+    margin: auto;
+    padding: 0;
+    border-radius: var(--radius-lg);
+}
+
+#competeBtn {
+    margin: auto;
+    width: 50%;
+    background: var(--color-primary);
+    border: none;
+    color: var(--color-text-primary);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-2xl);
+    transition: var(--transition-normal);
+}
+
+#competeBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-btn-primary-hover);
+}
+
+/* Achievement Columns in Modal */
+#userAchievements,
+#friendAchievements {
+    height: 100%;
+    width: 50%;
+    margin: auto;
+    overflow-y: auto;
+}
+
+#userAchievements i,
+#friendAchievements i {
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+/* Error Messages */
+.error-ach,
+.error-ser {
+    color: var(--color-text-primary);
+    text-align: center;
+}
+
+/* Friend Status */
+#friendPageStatus {
+    color: var(--color-text-secondary);
+}
+
+#friendGameStatus {
+    color: var(--color-text-muted);
+}
+
+/* Row alignment */
+.friend-game-row {
+    align-items: center;
+}
+
+.friend-game-col {
+    margin: auto;
+}

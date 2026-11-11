@@ -1,0 +1,57 @@
+@model List<SteamProject.ViewModels.GameVM>
+@{
+    ViewData["Title"] = "Admin - Load Game Info";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/Admin.css" asp-append-version="true">
+</head>
+<div class="container admin-container">
+    <main role="main" class="pb-3">
+        <div class="admin-header">
+            <h1>Load Bulk Game Info</h1>
+            <h2>Load additional game information (genres, etc.)</h2>
+        </div>
+        <hr>
+        <div class="row">
+            @Html.Partial("AdminNavigation")
+            <div class="col-md-9">
+                @if(Model == null)
+                {
+                    <div class="admin-card">
+                        <h3 class="admin-card-title">@ViewBag.MyString</h3>
+                    </div>
+                }
+                else if(Model.Count() == 0)
+                {
+                    <div class="admin-card">
+                        <h3 class="admin-card-title">All Game Info Loaded</h3>
+                        <p class="admin-card-content">All of the games in the server library have bulk info already loaded.</p>
+                    </div>
+                }
+                else
+                {
+                    <h3>Game Info Added</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Steam App Id</th>
+                                <th>Genres</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(var game in Model)
+                            {
+                                <tr>
+                                    <td>@game._game.Name</td>
+                                    <td>@game._appId</td>
+                                    <td>@game._game.Genres</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </main>
+</div>

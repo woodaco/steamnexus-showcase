@@ -1,0 +1,59 @@
+@* Signed-in navigation links. Rendered twice by _Layout: in the desktop sidebar (with the ids the
+   BDD page objects use) and in the phone off-canvas menu (IdPrefix "oc-", so ids stay unique). *@
+@model string
+@{
+    var idPrefix = Model ?? string.Empty;
+    // The read-only demo persona only gets the database-backed pages it is allowed to open.
+    var isDemo = SteamProject.Demo.DemoMode.IsDemoSession(User);
+}
+@if (User.IsInRole("admin"))
+{
+    <div class="nav-litem">
+        <a id="@(idPrefix)navAdmin" asp-area="" asp-controller="Admin" asp-action="Index">
+            <img class="litem-img" src="~/assets/dashgrid.png" alt="">
+            <div class="litem-label">Admin</div>
+        </a>
+    </div>
+}
+@if (!isDemo)
+{
+    <div class="nav-litem">
+        <a id="@(idPrefix)navProfile" asp-area="Identity" asp-page="/Account/Manage/Index">
+            <img class="litem-img" src="~/assets/person.png" alt="">
+            <div class="litem-label">Profile</div>
+        </a>
+    </div>
+}
+@if (!isDemo)
+{
+    <div class="nav-litem">
+        <a id="@(idPrefix)navFriends" asp-area="" asp-controller="Home" asp-action="Friends">
+            <img class="litem-img" src="~/assets/person.3.sequence@2x.png" alt="">
+            <div class="litem-label">Friends</div>
+        </a>
+    </div>
+}
+<div class="nav-litem">
+    <a id="@(idPrefix)navDashboard" asp-area="" asp-controller="Home" asp-action="Dashboard">
+        <img class="litem-img" src="~/assets/dashgrid.png" alt="">
+        <div class="litem-label">Dashboard</div>
+    </a>
+</div>
+<div class="nav-litem">
+    <a id="@(idPrefix)navLibrary" asp-area="" asp-controller="Library" asp-action="Index">
+        <img class="litem-img" src="~/assets/books.png" alt="">
+        <div class="litem-label">Library</div>
+    </a>
+</div>
+<div class="nav-litem">
+    <a id="@(idPrefix)navCompete" asp-area="" asp-controller="Compete" asp-action="Index">
+        <img class="litem-img" src="~/assets/flags.png" alt="">
+        <div class="litem-label">Compete</div>
+    </a>
+</div>
+<div class="nav-litem">
+    <a id="@(idPrefix)navPrivacy" asp-area="" asp-controller="Home" asp-action="Privacy">
+        <img class="litem-img" src="~/assets/eye.png" alt="">
+        <div class="litem-label">Privacy</div>
+    </a>
+</div>

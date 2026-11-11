@@ -1,0 +1,62 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-SteamProject-8cc9c827-d5e8-48d0-969a-97836fd8127b</UserSecretsId>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'https' " />
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
+  <ItemGroup>
+    <Content Include="Data\Results.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Extensions\**" />
+    <Content Remove="Extensions\**" />
+    <EmbeddedResource Remove="Extensions\**" />
+    <None Remove="Extensions\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AspNet.Security.OpenId" Version="8.0.0" />
+    <PackageReference Include="AspNet.Security.OpenId.Steam" Version="8.0.0" />
+    <PackageReference Include="Betalgo.OpenAI" Version="8.7.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="8.0.11" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.0" />
+
+    <PackageReference Include="SendGrid" Version="9.28.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="chosen.jquery" Version="1.2.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="8.0.0" />
+  </ItemGroup>
+  <!--
+    Build stamp for the anonymous /status page (BuildInfo reads these AssemblyMetadata attributes).
+    Pass -p:BuildGitSha=... to override (e.g. a CI system without a .git folder); otherwise the
+    short SHA comes from git, and "unknown" when git is unavailable. Never put secrets here.
+  -->
+  <Target Name="StampBuildInfo" BeforeTargets="GetAssemblyAttributes;GenerateAssemblyInfo">
+    <Exec Condition=" '$(BuildGitSha)' == '' " Command="git rev-parse --short HEAD" ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="low" StandardErrorImportance="low" WorkingDirectory="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitShaOutput" />
+      <Output TaskParameter="ExitCode" PropertyName="_GitShaExitCode" />
+    </Exec>
+    <PropertyGroup>
+      <BuildGitSha Condition=" '$(BuildGitSha)' == '' And '$(_GitShaExitCode)' == '0' ">$(_GitShaOutput.Trim())</BuildGitSha>
+      <BuildGitSha Condition=" '$(BuildGitSha)' == '' ">unknown</BuildGitSha>
+      <BuildTimeUtc Condition=" '$(BuildTimeUtc)' == '' ">$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))</BuildTimeUtc>
+    </PropertyGroup>
+    <ItemGroup>
+      <AssemblyMetadata Include="BuildGitSha" Value="$(BuildGitSha)" />
+      <AssemblyMetadata Include="BuildTimeUtc" Value="$(BuildTimeUtc)" />
+    </ItemGroup>
+  </Target>
+</Project>

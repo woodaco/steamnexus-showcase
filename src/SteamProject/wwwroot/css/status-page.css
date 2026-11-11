@@ -1,0 +1,77 @@
+/* Friendly status page (Home/NotFound) */
+.sn-status-page {
+    font-family: var(--font-primary);
+    max-width: 640px;
+    margin: var(--space-10) auto;
+    padding: var(--space-8) var(--space-5);
+    text-align: center;
+    /* Text colour comes from the active theme stylesheet (light or dark). */
+    background: linear-gradient(145deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+    border: 1px solid var(--color-border-accent);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-card);
+}
+
+.sn-status-code {
+    font-size: clamp(3.5rem, 12vw, 6rem);
+    font-weight: var(--fw-bold);
+    line-height: 1;
+    background: var(--color-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: var(--space-3);
+}
+
+.sn-status-page h1 {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    font-weight: var(--fw-semibold);
+    margin-bottom: var(--space-3);
+}
+
+.sn-status-page p {
+    opacity: 0.8;
+    line-height: var(--lh-relaxed);
+}
+
+.sn-status-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-5);
+}
+
+.sn-status-btn,
+.sn-status-btn:hover,
+.sn-status-btn:focus {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+    font-weight: var(--fw-medium);
+    text-decoration: none;
+}
+
+.sn-status-btn:hover {
+    box-shadow: var(--shadow-glow-primary);
+}
+
+/* Build stamp on /status */
+.sn-build-info {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: var(--space-3) var(--space-5);
+    margin: var(--space-6) auto 0;
+    max-width: 420px;
+    text-align: left;
+}
+
+.sn-build-info dt {
+    font-weight: var(--fw-semibold);
+}
+
+.sn-build-info dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}

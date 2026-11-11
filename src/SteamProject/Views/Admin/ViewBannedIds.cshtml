@@ -1,0 +1,62 @@
+@model IEnumerable<string>
+@{
+    ViewData["Title"] = "Admin - Blacklist";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/Admin.css" asp-append-version="true">
+</head>
+<div class="container admin-container">
+    <main role="main" class="pb-3">
+        <div class="admin-header">
+            <h1>Blacklisted Ids</h1>
+            <h2>Users who have been banned from the platform</h2>
+        </div>
+        <hr>
+        <div class="row">
+            @Html.Partial("AdminNavigation")
+            <div class="col-md-9">
+                @if (TempData["AdminMessage"] != null)
+                {
+                    <div class="alert alert-success" role="alert">@TempData["AdminMessage"]</div>
+                }
+                @if (TempData["AdminError"] != null)
+                {
+                    <div class="alert alert-danger" role="alert">@TempData["AdminError"]</div>
+                }
+                @if(Model == null || !Model.Any())
+                {
+                    <div class="admin-empty">
+                        <i class="bi bi-shield-check admin-empty-icon"></i>
+                        <p>No banned users. The community is behaving well!</p>
+                    </div>
+                }
+                else
+                {
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Steam ID</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(var blackListId in Model)
+                            {
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => blackListId)</td>
+                                    <td>
+                                        <form asp-action="Unban" method="post" class="unban-form"
+                                              onsubmit="return confirm('Unban @blackListId? They will be able to re-link their Steam account.');">
+                                            <input type="hidden" name="id" value="@blackListId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-success">Unban</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </main>
+</div>

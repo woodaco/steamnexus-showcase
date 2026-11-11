@@ -1,0 +1,202 @@
+/*
+ * SteamNexus Dark Theme
+ * Overrides design tokens for dark mode
+ */
+
+/* General page styling */
+body {
+    background: var(--color-bg-dark);
+    color: var(--color-text-primary);
+}
+
+/* Typography */
+p, ul, li {
+    color: var(--color-text-primary);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-primary);
+}
+
+/* Cards and surfaces */
+.modal-content {
+    background: var(--color-bg-dark-2);
+    border: 1px solid var(--color-border);
+}
+
+.userCard {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+}
+
+.card-title, .card-text {
+    color: var(--color-text-primary);
+}
+
+/* Carousel styling */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: rgba(102, 126, 234, 0.5);
+}
+
+.carousel-inner {
+    border-color: var(--color-primary-start);
+    background-color: var(--color-bg-dark-2);
+}
+
+/* Buttons */
+.show-followed-btn {
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+    font-size: 1.2rem;
+}
+
+/* Steam icon */
+#steamIcon {
+    color: var(--color-primary-start);
+}
+
+/* Modal styling */
+.modal-header, .modal-body, .modal-footer {
+    background: var(--color-bg-dark-2);
+    border-color: var(--color-border);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar-thumb {
+    background: var(--color-bg-dark-2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-start);
+}
+
+/* Loading spinner */
+.loading-spinner:after {
+    border: 10px solid var(--color-accent-cyan);
+    border-color: var(--color-accent-cyan) transparent var(--color-accent-cyan) transparent;
+}
+
+/* Tables */
+th, tr, td {
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+}
+
+#friendsListTable tr:nth-child(even) {
+    background-color: rgba(102, 126, 234, 0.1);
+}
+
+/* Game info card */
+.gameInfoCard {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+}
+
+/* News section */
+.news-title {
+    color: var(--color-text-primary);
+}
+
+.news-title-main {
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+}
+
+/* Icons */
+.bi-envelope-paper {
+    color: var(--color-text-primary);
+}
+
+/* Link and action buttons */
+.link-btn {
+    background: var(--color-bg-dark-2);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+}
+
+.link-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary-start);
+}
+
+.summarize-btn {
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+}
+
+.summarize-btn.show-original {
+    background-color: var(--color-accent-green);
+}
+
+/* Metadata text */
+.feedtype {
+    color: var(--color-text-muted);
+}
+
+.timestamp {
+    color: var(--color-text-secondary);
+}
+
+/* Landing page */
+.feature-card-title,
+.feature-card-text,
+.source-note {
+    color: var(--color-text-primary);
+}
+
+.minor2 {
+    color: var(--color-text-primary);
+}
+
+/* Animation for typewriter effect */
+.laser-engrave {
+    animation: laser-engrave 0.5s forwards, white-fire 1s infinite;
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+@keyframes laser-engrave {
+    0% {
+        text-shadow: none;
+    }
+    100% {
+        text-shadow: 0 0 20px #fff, 0 0 40px #fff, 0 0 60px #fff;
+    }
+}
+
+@keyframes white-fire {
+    0%, 100% {
+        text-shadow: 0 0 20px #fff, 0 0 40px #fff, 0 0 60px #fff, 0 0 80px #fff;
+    }
+    50% {
+        text-shadow: 0 0 30px #fff, 0 0 60px #fff, 0 0 90px #fff, 0 0 120px #fff;
+    }
+}
+
+/* Form labels */
+label.form-label,
+label.Input_Email {
+    color: var(--color-text-primary);
+}
+
+/* Input fields in dark mode */
+input, select, textarea {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--color-text-muted);
+}
+
+/* Links */
+a {
+    color: var(--color-text-link);
+}
+
+a:hover {
+    color: var(--color-text-link-hover);
+}

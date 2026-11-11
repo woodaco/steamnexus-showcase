@@ -1,0 +1,21 @@
+@model SteamProject.ViewModels.StatusViewModel
+@{
+    ViewData["Title"] = "Status";
+}
+
+<link rel="stylesheet" href="~/css/status-page.css" asp-append-version="true" />
+
+<section class="sn-status-page" aria-labelledby="status-heading">
+    <h1 id="status-heading">Status</h1>
+    <p>Which build of SteamNexus is running. Liveness: <a href="/health/live">/health/live</a> · Readiness (both databases): <a href="/health/ready">/health/ready</a></p>
+    <dl class="sn-build-info">
+        <dt>Commit</dt>
+        <dd><code id="status-sha">@Model.GitSha</code></dd>
+        <dt>Environment</dt>
+        <dd id="status-env">@Model.Environment</dd>
+        <dt>Seeding on startup</dt>
+        <dd id="status-seeding">@(Model.SeedingOnStartup ? "on" : "off")</dd>
+        <dt>Startup data work</dt>
+        <dd id="status-startup">@(Model.StartupDataReady ? "finished" : "in progress")</dd>
+    </dl>
+</section>

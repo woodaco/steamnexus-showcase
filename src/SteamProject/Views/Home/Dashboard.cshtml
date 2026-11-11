@@ -1,0 +1,477 @@
+@using Microsoft.IdentityModel.Tokens
+@model SteamProject.ViewModels.UserDashboardVM
+@{
+    ViewData["Title"] = "Dashboard";
+    // The demo persona never calls Steam or OpenAI, so the news links and summaries are left out.
+    var isDemo = SteamProject.Demo.DemoMode.IsDemoSession(User);
+    int recentCount = 0;
+    int followedCount = 0;
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/Dashboard.css" type="text/css">
+</head>
+
+@if (Model == null)
+{
+    <h1>This will be your dashboard page once you sign in with a  <a href="/Identity/Account/Manage/ExternalLogins" class="btn btn-outline-info justify-content-center">linked account,</a> and we will pull your Steam library.</h1>
+}
+else
+{
+
+
+
+    <div class="container">
+
+    <h1>User Dashboard
+        <button type="button" id="toDoButton" class="btn btn-outline-info center" data-bs-toggle="collapse" data-bs-target="#toDoCollapse" title="Coming Soon">
+            <i fill="CurrentColor" class="bi bi-arrow-bar-down active"></i>
+        </button> </h1>
+    <div class="container">
+            <div class="row">
+                <div class="col-md-3 center">
+
+                    <h3 id="divSteamNameLevel" class="center">Level @Model.User.PlayerLevel</h3>
+
+                    <div id="userAvatar">
+                        <img class="user-avatar" id="@Model.User.SteamId" src="@Model.User.AvatarUrl"/>
+
+                        <button class="btn show-followed-btn" data-bs-toggle="modal" title="Show Followed Games" data-bs-target="#followModal">
+                            <i fill="CurrentColor" class="bi bi-bookmark"></i> Followed Games
+                        </button>
+                    </div>
+
+                    <h3 id="userName" class="center">@Model.User.SteamName</h3>
+
+                </div>
+                <div class="col-md-9">
+
+                    <div id="toDoCollapse" class="collapse">
+                        <p>Here is a centralized location to receive updates and news for the games you are interested in. In the future it will host the following features: </p>
+                        <ul>
+                            <li>Game News Tracking</li>
+                            <ul>
+                                <li>See the games you follow</li>
+                                <li>Review the games you recently played</li>
+                            </ul>
+                            <li>ChatGPT based Summation of recent game updates</li>
+                            <li>Change-log's' in natural human language distilled to only key details </li>
+                            <li>See the results of your recent achievement competitions</li>
+                        </ul>
+                    </div>
+
+                    @if (Model.User.UserBadges.Any())
+                    {
+                        <div class="row">
+                            <h5>Badges Earned:</h5>
+                            <br />
+                            <div class="badges-container">
+                                @foreach (var userBadge in Model.User.UserBadges)
+                                {
+                                    <div class="col-md-2 col-sm-4">
+                                        <button type="button" title="@userBadge.Badge.Name Badge" class="btn badge-button-img" data-bs-toggle="collapse" data-bs-target="#badge-description-@userBadge.BadgeId">
+                                            <img src="data:image/png;base64,@Convert.ToBase64String(userBadge.Badge.Image)" class="badge-img" alt="@userBadge.Badge.Name">
+                                        </button>
+                                        <div class="collapse badge-description" id="badge-description-@userBadge.BadgeId">
+                                            <p class="mt-2">@userBadge.Badge.Description</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+
+        <div id="followModal" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header" id="followModalHeader">
+                        <h3>Followed Games</h3><button type="button" class="btn-close btn-close-white" id="modalCloser" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container-fluid" id="informationRow">
+                            @{
+                                if(!Model.FollowedGames.Any())
+                                {
+                                    <p>
+                                        You have no followed games!<br>
+                                        Go back to your library page and follow some.
+                                    </p>
+                                }
+                                else
+                                {
+                                    <div class="flex-container">
+                                        @foreach (List<Game> gameList in Model.FollowedGames)
+                                        {
+                                            
+                                                @foreach (Game game in gameList)
+                                                {
+                                                    var index = game.Name.IndexOf("'");
+                                                    //Can make this more simple by just assigning name = game.Name and then doing substring on it if there's an index,
+                                                    // and then use that name variable no matter what so that the if-else doesn't have repeated code.
+                                                    // Scot recommended to put this in a service, and then call it so I can catch all ' and " or other symbols.
+                                                    if(index > -1)
+                                                    {
+                                                        var name = game.Name.Substring(0, index) + "\\" + game.Name.Substring(index);
+                                                        <div class="card followCard col-md-4 mb-3" id="@game.Name" value="@game.AppId">
+                                                            <img class="img-fluid" alt="@game.Name" src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/capsule_616x353.jpg", game.AppId)" alt="@string.Format("{0}", game.Name)">
+                                                            <button type="button" class="btn btn-outline-info follow-btn" data-bs-toggle="tooltip" title="Unfollow Game" onclick="setUnfollowGame('@name')">
+                                                                <i fill="CurrentColor" id="@game.AppId followicon" class="bi bi-bookmark-dash-fill"></i>
+                                                            </button>
+                                                            <div class="card-body">
+                                                                <h4 class="card-title">@game.Name</h4>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="card followCard col-md-4 mb-3" id="@game.Name" value="@game.AppId">
+                                                            <img class="img-fluid" alt="@game.Name" src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/capsule_616x353.jpg", game.AppId)" alt="@string.Format("{0}", game.Name)">
+                                                            <button type="button" class="btn btn-outline-info follow-btn" data-bs-toggle="tooltip" title="Unfollow Game" onclick="setUnfollowGame('@game.Name')">
+                                                                <i fill="CurrentColor" id="@game.AppId followicon" class="bi bi-bookmark-dash-fill"></i>
+                                                            </button>
+                                                            <div class="card-body">
+                                                                <h4 class="card-title">@game.Name</h4>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                }
+                                            }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br/>
+
+        <h1>Your News</h1>
+        @if (isDemo)
+        {
+            <h6>News summaries are turned off for the demo persona.</h6>
+        }
+        else
+        {
+            <h6>Click the <i fill="CurrentColor" class="bi bi-info-circle-fill"></i> to see the news section for a game.</h6>
+        }
+        <br/>
+        <div class="w-100">
+
+            <h4>Recently Played Games</h4>
+
+            <div class="row">
+                @if (Model.RecentGames.Count > 0)
+                {
+                    <div id="recentGamesCarousel" class="carousel slide" data-bs-touch="false" data-bs-interval="false">
+                        <div class="carousel-inner">
+                            <div class="carousel-item active recentGames">
+                                <div class="row row-cols-1 row-cols-md-3 g-1 justify-content-center ">
+
+                                    @for (var i = 0; i < Model.RecentGames[0].Count; i++)
+                                    {
+                                        <div class="col-md-4 threecol w-100">
+                                            <div class="card h-100 userCard" data-gameid="@Model.RecentGames[0][i].AppId">
+                                                <img class="card-img-top" alt="@Model.RecentGames[0][i].Name" src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/capsule_616x353.jpg", Model.RecentGames[0][i].AppId)" alt="@string.Format("{0}", Model.RecentGames[0][i].Name)">
+                                                @if (!isDemo)
+                                                {
+                                                    <a class="btn btn-outline-info show-btn" title="More Game News" href='@Url.Action("ShowMoreNews", "Home", new { appId = Model.RecentGames[0][i].AppId })'>
+                                                    <i fill="CurrentColor" class="bi bi-info-circle-fill"></i>
+                                                </a>
+                                                }
+                                                <div class="card-body h-100">
+                                                    <h4 class="card-title">@Model.RecentGames[0][i].Name</h4>
+                                                    <p class="recent-game-news" data-gameid="@Model.RecentGames[0][i].AppId"></p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    }
+                                </div>
+
+                            </div>
+
+                            @for (var index = 1; index < Model.RecentGames.Count; index++)
+                            {
+                                var game = Model.RecentGames[index];
+                                <div class="carousel-item recentGames">
+                                    <div class="row row-cols-1 row-cols-md-3 g-1 justify-content-center">
+
+                                        @for (var i = 0; i < Model.RecentGames[index].Count; i++)
+                                        {
+                                            <div class="col-md-4 threecol w-100">
+                                                <div class="card h-100 userCard" data-gameid="@game[i].AppId">
+                                                    <img class="card-img-top" alt="@game[i].Name" src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/capsule_616x353.jpg", game[i].AppId)" alt="@string.Format("{0}", @game[i].Name)">
+                                                    @if (!isDemo)
+                                                    {
+                                                        <a class="btn btn-outline-info show-btn" title="More Game News" href='@Url.Action("ShowMoreNews", "Home", new { appId = game[i].AppId })'>
+                                                        <i fill="CurrentColor" class="bi bi-info-circle-fill"></i>
+                                                    </a>
+                                                    }
+                                                    <div class="card-body h-100">
+                                                        <h4 class="card-title">@game[i].Name</h4>
+                                                        <p class="recent-game-news" data-gameid="@game[i].AppId"></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        }
+                                    </div>
+                                </div>
+
+                            }
+                        </div>
+
+                        <button class="carousel-control-prev" type="button" data-bs-target="#recentGamesCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+
+                        <button class="carousel-control-next" type="button" data-bs-target="#recentGamesCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+
+                    </div>
+                }
+                else
+                {
+                    <h4>You have no Recent Games to Display, Please visit the <a class="btn btn-outline-info justify-content-center" href='@Url.Action("Index", "Library")'>Library Page</a> or go play some games</h4>
+                }
+            </div>
+            <br />
+
+            <br />
+            <div class="w-100">
+
+                <h4>Followed Games</h4>
+
+                <div class="row">
+                    @if (Model.FollowedGames.Count > 0)
+                    {
+                        <div id="followedGamesCarousel" class="carousel slide" data-bs-touch="false" data-bs-interval="false">
+                            <div class="carousel-inner news-container">
+                                <div class="carousel-item active followedGames">
+                                    <div class="row row-cols-1 row-cols-md-3 g-1 news-container justify-content-center">
+
+                                        @for (var i = 0; i < Model.FollowedGames[0].Count; i++)
+                                        {
+                                            <div class="col-md-4 news-container threecol w-100">
+                                                <div class="card h-100 userCard" data-gameid="@Model.FollowedGames[0][i].AppId">
+                                                    <img class="card-img-top" alt="@Model.FollowedGames[0][i].Name" src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/capsule_616x353.jpg", Model.FollowedGames[0][i].AppId)" alt="@string.Format("{0}", Model.FollowedGames[0][i].Name)">
+                                                    @if (!isDemo)
+                                                    {
+                                                        <a class="btn btn-outline-info show-btn" title="More Game News" href='@Url.Action("ShowMoreNews", "Home", new { appId = Model.FollowedGames[0][i].AppId })'>
+                                                        <i fill="CurrentColor" class="bi bi-info-circle-fill"></i>
+                                                    </a>
+                                                    }
+                                                    <div class="card-body h-100">
+                                                        <h4 class="card-title">@Model.FollowedGames[0][i].Name</h4>
+                                                        <p class="followed-game-news" data-gameid="@Model.FollowedGames[0][i].AppId"></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                @for (var index = 1; index < Model.FollowedGames.Count; index++)
+                                {
+                                    var game = Model.FollowedGames[index];
+                                    <div class="carousel-item followedGames">
+                                        <div class="row row-cols-1 row-cols-md-3 g-1 justify-content-center">
+
+                                            @for (var i = 0; i < Model.FollowedGames[index].Count; i++)
+                                            {
+                                                <div class="col-md-4 threecol w-100">
+                                                    <div class="card h-100 userCard" data-gameid="@game[i].AppId">
+                                                        <img class="card-img-top" alt="@game[i].Name" src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/capsule_616x353.jpg", game[i].AppId)" alt="@string.Format("{0}", @game[i].Name)">
+                                                        @if (!isDemo)
+                                                        {
+                                                            <a class="btn btn-outline-info show-btn" title="More Game News" href='@Url.Action("ShowMoreNews", "Home", new { appId = game[i].AppId })'>
+                                                            <i fill="CurrentColor" class="bi bi-info-circle-fill"></i>
+                                                        </a>
+                                                        }
+                                                        <div class="card-body h-100">
+                                                            <h4 class="card-title">@game[i].Name</h4>
+                                                            <p class="followed-game-news" data-gameid="@game[i].AppId"></p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <button class="carousel-control-prev" type="button" data-bs-target="#followedGamesCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+
+                            <button class="carousel-control-next" type="button" data-bs-target="#followedGamesCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <h6 class="justify-content-center">You have no followed games to Display, Please visit the <a class="btn btn-outline-info justify-content-center" href='@Url.Action("Index", "Library")'>Library Page</a> and go follow some games</h6>
+                    }
+                </div>
+                <br />
+
+            </div>
+        </div>
+    </div>
+
+    <h1>Your Race Results</h1>
+
+    @if (!Model.CurrentCompetitions.IsNullOrEmpty() || !Model.PreviousCompetitions.IsNullOrEmpty())
+    {
+        <div class="w-100">
+            <div class="row">
+                <h4>Current Competitions</h4>
+                @if (!Model.CurrentCompetitions.IsNullOrEmpty())
+                {
+                    <div id="currentCompetitionsCarousel" class="carousel slide" data-bs-touch="false" data-bs-interval="false">
+                        <div class="carousel-inner">
+                            @for (var i = 0; i < Model.CurrentCompetitions.Count; i++)
+                            {
+                                var competition = Model.CurrentCompetitions[i];
+                                var isActive = i == 0 ? "active" : "";
+                                <div class="carousel-item @isActive">
+                                    <div class="competition-userCard">
+                                        <div class="row">
+                                            <h4 class="competition-card-title col">@competition.Game.Name</h4>
+                                        </div>
+
+                                        <div id="countdown" class="countdown" data-start-date="@competition.StartDate.ToString("o")" data-end-date="@competition.EndDate.ToString("o")">
+                                        </div>
+
+                                        <a href="@Url.Action("Details", "Compete", new { compId = competition.Id })">
+                                            <img src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/library_hero.jpg", competition.Game.AppId)" class="competition-img-top" alt="@competition.Game.Name"
+                                                 onerror="this.onerror=null; this.src='@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/header.jpg", competition.Game.AppId)';">
+                                        </a>
+
+
+
+                                        <div class="competition-details row">
+                                            <p class="card-text col">Starts: @competition.StartDate.ToString("g")</p>
+                                            <p class="card-text col">Created by: @competition.Creator.SteamName</p>
+                                            <p class="card-text col">Ends: @competition.EndDate.ToString("g")</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+
+                        <button class="carousel-control-prev" type="button" data-bs-target="#currentCompetitionsCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+
+                        <button class="carousel-control-next" type="button" data-bs-target="#currentCompetitionsCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center">
+                        <p>You have not participated in any current competitions.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <br />
+
+        <h4>Previous Competitions</h4>
+        <div class="row">
+            @if (!Model.PreviousCompetitions.IsNullOrEmpty())
+            {
+
+                <div id="previousCompetitionsCarousel" class="carousel slide" data-bs-touch="false" data-bs-interval="false">
+                    <div class="carousel-inner">
+
+                        @for (var index = 0; index < Model.PreviousCompetitions.Count; index++)
+                        {
+                            var competitions = Model.PreviousCompetitions[index];
+                            var isActive = index == 0 ? "active" : "";
+                            <div class="carousel-item @isActive">
+                                <div class="row row-cols-1 row-cols-md-3 g-1 justify-content-center">
+
+                                    @for (var i = 0; i < competitions.Count(); i++)
+                                    {
+                                        var competition = competitions[i];
+                                        <div class="col-md-4 threecol w-100">
+                                            <div class="card h-100 userCard">
+
+                                                <a href="@Url.Action("Details", "Compete", new { compId = competition.Id })">
+                                                    <img src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/header.jpg", competition.Game.AppId)" class="competition-img-top" alt="@competition.Game.Name">
+                                                </a>
+
+                                                <div class="competition-card-body h-100">
+                                                    <h4 class="competition-card-title">@competition.Game.Name</h4>
+                                                    <p class="card-text">Created by: @competition.Creator.SteamName</p>
+                                                    <p class="card-text">Started: @competition.StartDate.ToString("g")</p>
+                                                    <p class="card-text">Ended: @competition.EndDate.ToString("g")</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <button class="carousel-control-prev" type="button" data-bs-target="#previousCompetitionsCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+
+                    <button class="carousel-control-next" type="button" data-bs-target="#previousCompetitionsCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            }
+            else
+            {
+                <div class="text-center">
+                    <p>You have not participated in any previous competitions.</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center">
+            <p>You have not participated in any competitions. Please <a href="@Url.Action("Index", "Compete")" class="btn btn-outline-info btn-sm">start a new competition</a>.</p>
+        </div>
+    }
+
+    <br />
+
+}
+@section Scripts
+{
+    <script type="text/javascript" src="~/js/countdown.js"></script>
+    @if (!SteamProject.Demo.DemoMode.IsDemoSession(User))
+    {
+        <script type="text/javascript" src="~/js/followGame.js"></script>
+        <script src="~/js/News/dashboardGameNews.js"></script>
+    }
+}
+
+                
+

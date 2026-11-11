@@ -1,0 +1,232 @@
+/* Friends Page (Friends List) */
+
+* {
+    font-family: var(--font-primary);
+}
+
+.no-friends-message {
+    margin-top: 60px;
+    text-align: center;
+}
+
+.wrapper {
+    display: flex;
+    justify-content: center;
+    flex-flow: row wrap;
+}
+
+#friend-header {
+    margin-top: var(--space-6);
+    margin-left: var(--space-6);
+    text-align: left;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-primary);
+}
+
+#search-input {
+    width: 235px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-2xl);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-primary);
+    padding: var(--space-2) var(--space-4);
+    margin-left: var(--space-6);
+}
+
+#search-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+#search-input:focus {
+    outline: none;
+    border-color: var(--color-primary-start);
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Friend Card */
+.card.friend-card {
+    height: 350px;
+    width: 300px;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--radius-xl);
+    margin: var(--space-5);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    transition: var(--transition-normal);
+}
+
+.card.friend-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow-primary);
+}
+
+.friend-card-img {
+    border-radius: var(--radius-md);
+    height: 138px;
+    width: 138px;
+    margin-top: var(--space-6);
+}
+
+.card-body.friend-card-body {
+    display: flex;
+    justify-content: center;
+    flex-flow: column wrap;
+    align-items: center;
+}
+
+.friend-card-btns {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    align-items: center;
+    width: 200px;
+}
+
+.compare-games,
+.inv-to-team {
+    height: 35px;
+    width: 70px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: transparent;
+    display: grid;
+    align-content: center;
+    transition: var(--transition-normal);
+}
+
+.compare-games:hover,
+.inv-to-team:hover {
+    border-color: var(--color-primary-start);
+    background-color: rgba(102, 126, 234, 0.1);
+}
+
+.bi.bi-controller,
+.bi.bi-person-add {
+    font-size: 1.8rem;
+    color: var(--color-text-primary);
+}
+
+.search-and-invite {
+    display: flex;
+    flex-flow: nowrap row;
+    align-items: center;
+}
+
+#inv-friend-i {
+    margin-left: var(--space-5);
+    font-size: 1.5rem;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+#inv-friend-i:hover {
+    color: var(--color-primary-start);
+}
+
+/* Modal */
+.close {
+    background: none;
+    border: none;
+}
+
+.modal-header,
+.modal-body,
+.modal-footer {
+    background-image: none;
+    border: none;
+}
+
+/* Email/Phone Inputs */
+#email-input {
+    margin-left: var(--space-3);
+    margin-bottom: var(--space-3);
+    width: 320px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-primary);
+    padding: var(--space-2) var(--space-3);
+}
+
+#email-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+#phone-input {
+    margin-left: var(--space-3);
+    width: 150px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-primary);
+    padding: var(--space-2) var(--space-3);
+}
+
+#email-error {
+    color: var(--color-accent-red);
+}
+
+/* Friend Name */
+.card-title.friend-name {
+    color: var(--color-text-primary);
+    font-weight: var(--fw-bold);
+}
+
+.card-title.friend-name:hover {
+    cursor: url('../assets/pencilfillpurp.png'), auto;
+}
+
+.name-box {
+    color: var(--color-text-primary);
+    height: 2rem;
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-lg);
+    width: 10rem;
+    background-color: rgba(0, 0, 0, 0.08);
+    text-align: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-3);
+}
+
+.nickname-title {
+    width: 12rem;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.revert {
+    margin-left: var(--space-4);
+    color: var(--color-text-primary);
+    font-weight: var(--fw-semibold);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.revert:hover {
+    color: var(--color-primary-start);
+}
+
+/* Friend Status Text */
+.friend-persona {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-secondary);
+}
+
+.friend-game {
+    font-weight: var(--fw-bold);
+    color: var(--color-text-primary);
+}
+
+/* Verified Icon */
+.verified-icon {
+    position: absolute;
+    width: 35px;
+    height: 35px;
+    left: 67%;
+    top: 5%;
+}

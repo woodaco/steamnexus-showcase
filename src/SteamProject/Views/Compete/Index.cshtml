@@ -1,0 +1,80 @@
+@model SteamProject.ViewModels.CompeteIndexVM
+@{
+    ViewData["Title"] = "My Competitions";
+}
+
+<head>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css"
+    integrity="sha512-YWzhKL2whUzgiheMoBFwW8CKV4qpHQAEuvilg9FAn5VJUDwKZZxkJNuGM4XkWuk94WCrrwslk8yWNGmY1EduTA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" 
+    />
+    <link rel="stylesheet" href="~/css/Compete.css">
+    
+</head>
+
+
+<div class="competitions-container">
+    <h1 class="competitions-header"> YOUR COMPETITIONS: </h1>
+
+    <div class="row competitions-section">
+        <h1> Running </h1>
+        @if (Model.CompsRunning != null && Model.CompsRunning.Any())
+        {
+            @foreach (var competition in Model.CompsRunning)
+            {
+                <div class="col-md-4 competitionCol" >
+                    <div class="competitionDiv" id=@competition.Id >
+                        <div class="card competitionCard" >
+                            <img class="card-img-top competition-game-img" src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/header.jpg", @competition.Game.AppId)" alt="@string.Format("{0}", @competition.Game.Name)">
+                            <div class="card-body">
+                                <p class="card-title competition-game-title"> @competition.Game.Name </p>
+                                <p> Start: @competition.StartDate </p>
+                                <p> End: @competition.EndDate </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="competitions-empty text-muted">No active competitions — start an achievement battle with the + button below!</p>
+        }
+    </div>
+    <div class="row competitions-section">
+        <h1> Complete </h1>
+        @if (Model.CompsComplete != null && Model.CompsComplete.Any())
+        {
+            @foreach (var competition in Model.CompsComplete)
+            {
+                <div class="col-md-4 competitionCol" >
+                    <div class="competitionDiv" id=@competition.Id >
+                        <div class="card competitionCard" >
+                            <img class="card-img-top competition-game-img" src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/header.jpg", @competition.Game.AppId)" alt="@string.Format("{0}", @competition.Game.Name)">
+                            <div class="card-body">
+                                <p class="card-title competition-game-title"> @competition.Game.Name </p>
+                                <p> Start: @competition.StartDate </p>
+                                <p> End: @competition.EndDate </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="competitions-empty text-muted">No completed competitions yet.</p>
+        }
+    </div>
+    <a href="/Compete/Create" id="compCreateLink" class="float">
+        <i class="fa fa-plus my-float"></i>
+    </a>
+    <p class="comp-Text">Achievement Battle</p>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script type="text/javascript" src="~/js/competeIndexPage.js"></script>
+}

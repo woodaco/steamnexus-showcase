@@ -1,0 +1,262 @@
+@model SteamProject.ViewModels.UserLibraryVM
+@{
+    ViewData["Title"] = "Game Library";
+}
+
+<link rel="stylesheet" href="~/css/Library.css">
+
+@if (Model == null)
+{
+    <div class="library-header" style="margin-top: var(--space-5);">
+        <div class="library-profile">
+            <div class="library-user-info">
+                <h1>Your Game Library</h1>
+                <p id="link-message" style="color: var(--color-text-secondary); margin: 0;">
+                    Link your Steam account to view your library.
+                </p>
+            </div>
+        </div>
+        <div class="library-actions">
+            <a href="/Identity/Account/Manage/ExternalLogins" class="lib-action-btn primary">
+                <i class="bi bi-steam"></i> Link Steam Account
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Library Header -->
+    <div class="library-header" style="margin-top: var(--space-5);">
+        <div class="library-profile">
+            <div class="library-avatar">
+                <img id="@Model._user.SteamId" src="@Model._user.AvatarUrl" alt="@Model._user.SteamName"/>
+            </div>
+            <div class="library-user-info">
+                <h1>@Model._user.SteamName's Library</h1>
+                <a href="@Model._user.ProfileUrl" class="steam-profile-link" target="_blank">View Steam Profile</a>
+            </div>
+        </div>
+        <div class="library-actions">
+            <button class="lib-action-btn" onclick="showHiddenGamesModal()" data-bs-toggle="tooltip" title="Show Hidden Games">
+                <i class="bi bi-eye"></i> Hidden Games
+            </button>
+            <a class="lib-action-btn primary" href="@Url.Action("Recommendations", "Library")" data-bs-toggle="tooltip" title="Get AI Recommendations">
+                <i class="bi bi-stars"></i> Recommend
+            </a>
+            <button class="lib-action-btn" onclick="refreshLibrary()" data-bs-toggle="tooltip" title="Refresh Library">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="library-controls">
+        <div class="library-search">
+            <input id="search-input" type="search" placeholder="Search games...">
+        </div>
+        <div class="library-filter-actions">
+            <button type="button" class="filter-toggle-btn" onclick="toggleFilterPanel()">
+                <i class="bi bi-funnel"></i> Filters
+                <span id="active-filter-count" class="filter-count" style="display: none;">0</span>
+            </button>
+            <button type="button" class="filter-clear-btn" onclick="clearAllFilters()" id="clear-all-btn" style="display: none;">
+                <i class="bi bi-x-circle"></i> Clear All
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div id="filter-panel" class="filter-panel" style="display: none;">
+        <div class="filter-section">
+            <h4 class="filter-section-title">
+                <i class="bi bi-controller"></i> Genres
+                <button type="button" class="filter-section-clear" onclick="clearGenreFilters()">Clear</button>
+            </h4>
+            <div class="filter-chips" id="genre-chips">
+                @foreach (var genre in Model._genres)
+                {
+                    <label class="filter-chip">
+                        <input type="checkbox" value="@genre" onchange="applyFilters()">
+                        <span>@genre</span>
+                    </label>
+                }
+            </div>
+        </div>
+        <div class="filter-section">
+            <h4 class="filter-section-title">
+                <i class="bi bi-tags"></i> Categories
+                <button type="button" class="filter-section-clear" onclick="clearCategoryFilters()">Clear</button>
+            </h4>
+            <div class="filter-chips" id="category-chips">
+                @foreach (var category in Model._categories)
+                {
+                    <label class="filter-chip">
+                        <input type="checkbox" value="@category" onchange="applyFilters()">
+                        <span>@category</span>
+                    </label>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="flex-container" id="game-Library">
+        @{
+            foreach(var game in Model._user.UserGameInfos)
+            {
+                var tempGame = Model._games.Where(g => g.AppId == game.Game.AppId).FirstOrDefault();
+                if(tempGame != null && game.Hidden == false)
+                {
+                    var gameGenres = tempGame.Genres ?? "";
+                    var gameCategories = tempGame.Categories ?? "";
+                    <div class="flex-item gameContainer sn-card-game" id="@tempGame.Name" value="@game.Game.AppId" data-bs-toggle="tooltip" title="@game.Game.Name" name=@game.Game.Id data-genres="@gameGenres" data-categories="@gameCategories">
+                        <button class="achievement-btn" data-bs-toggle="tooltip" title="View Achievements" id="@game.Game.AppId"></button>
+                        <img src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/header.jpg", @game.Game.AppId)" class="sn-card-img" alt="@game.Game.Name" onerror="this.onerror=null; this.classList.add('img-error'); this.parentElement.classList.add('has-img-error');"/>
+                        <div class="game-placeholder">
+                            <i class="bi bi-controller"></i>
+                            <span>@game.Game.Name</span>
+                        </div>
+                        @{
+                            //This is used to remove punctuation so that strings still work. Games like 'America's Army', breaks interacitons thanks to it's apostrophe.
+                            var index = tempGame.Name.IndexOf("'");
+                            if(index > -1)
+                            {
+                                var name = tempGame.Name.Substring(0, index) + "\\" + tempGame.Name.Substring(index);
+                                <button type="button" class="hide-btn" data-bs-toggle="tooltip" title="Hide Game" onclick="setHiddenGame('@name', '@Model._user.Id')" name=@game.Game.AppId>
+                                    <i fill="CurrentColor" class="bi bi-eye-slash-fill"></i>
+                                </button>
+                                <button type="button" class="follow-btn" data-bs-toggle="tooltip" title="Follow Game" onclick="setFollowedGame('@name')" name=@game.Game.AppId>
+                                    @if(game.Followed == true)
+                                    {
+                                        <i fill="CurrentColor" id="@game.Game.AppId followicon" class="bi bi-bookmark-dash-fill"></i>
+                                    }
+                                    else
+                                    {
+                                        <i fill="CurrentColor" id="@game.Game.AppId followicon" class="bi bi-bookmark-plus"></i>
+                                    }
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="hide-btn" data-bs-toggle="tooltip" title="Hide Game" onclick="setHiddenGame('@tempGame.Name', '@Model._user.Id')" name=@game.Game.Id>
+                                    <i  fill="CurrentColor" class="bi bi-eye-slash-fill"></i>
+                                </button>
+                                <button type="button" class="follow-btn" data-bs-toggle="tooltip" title="Follow/Unfollow Game" onclick="setFollowedGame('@tempGame.Name')" name=@game.Game.Id>
+                                    @if(game.Followed == true)
+                                    {
+                                        <i fill="CurrentColor" id="@game.Game.AppId followicon" class="bi bi-bookmark-dash-fill"></i>
+                                    }
+                                    else
+                                    {
+                                        <i fill="CurrentColor" id="@game.Game.AppId followicon" class="bi bi-bookmark-plus"></i>
+                                    }
+                                </button>
+                            }
+                            <a class="show-btn" title="More Game Info" href='@Url.Action("ShowMoreInfo", "Library", new {appId = @game.Game.AppId})'>
+                                <i fill="CurrentColor" class="bi bi-info-circle-fill"></i>
+                            </a>
+                        }
+                    </div>
+                }
+            }
+        }
+    </div>
+    <div id="hidden-game-modal" class="modal fade">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Hidden Games</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeModal()"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="flex-container">
+                        @{
+                            var temp = Model._user.UserGameInfos.Where(g => g.Hidden == true).ToList();
+                            if(temp.Count() > 0)
+                            {
+                                foreach(var game in Model._user.UserGameInfos)
+                                {
+                                    if(game.Hidden)
+                                    {
+                                        var tempGame = Model._games.Where(g => g.AppId == game.Game.AppId).First();
+                                        <div class="flex-item gameContainer sn-card-game" id="@tempGame.Name" value="@game.Game.Id">
+                                            <img src="@string.Format("https://steamcdn-a.akamaihd.net/steam/apps/{0}/header.jpg", @game.Game.AppId)" class="sn-card-img-sm" alt="@game.Game.Name" onerror="this.onerror=null; this.classList.add('img-error'); this.parentElement.classList.add('has-img-error');"/>
+                                            <div class="game-placeholder">
+                                                <i class="bi bi-controller"></i>
+                                                <span>@game.Game.Name</span>
+                                            </div>
+                                            @{
+                                                var index = tempGame.Name.IndexOf("'");
+                                                if(index > -1)
+                                                {
+                                                    var name = tempGame.Name.Substring(0, index) + "\\" + tempGame.Name.Substring(index);
+                                                    <button type="button" class="unhide-btn" data-bs-toggle="tooltip" title="Unhide Game" onclick="setUnhideGame('@name', '@Model._user.Id')" name=@game.Game.Id>
+                                                        <i fill="CurrentColor" class="bi bi-eye-fill"></i>
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="unhide-btn" data-bs-toggle="tooltip" title="Unhide Game" onclick="setUnhideGame('@tempGame.Name', '@Model._user.Id')" name=@game.Game.Id>
+                                                        <i fill="CurrentColor" class="bi bi-eye-fill"></i>
+                                                    </button>
+                                                }
+                                            }
+                                        </div>
+                                    }
+                                } 
+                            }
+                            else
+                            {
+                                <div class="sn-text-muted" id="hidden-modal-no-game-message">You have no hidden games, go hide some! If you just hid a game, try refreshing the page.</div>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="sn-btn sn-btn-danger" data-bs-dismiss="modal" onclick="closeModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="ach-modal" tabindex="-1" role="dialog" aria-labelledby="ach-modal" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content ach-modal-content">
+                <div class="modal-header">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20" height="20"><g><rect height="15.4956" opacity="0" width="15.4859" x="0" y="0"/><path d="M0.252699 15.2429C0.594496 15.575 1.1609 15.575 1.49293 15.2429L7.74293 8.99293L13.9929 15.2429C14.325 15.575 14.9011 15.5847 15.2332 15.2429C15.5652 14.9011 15.5652 14.3445 15.2332 14.0125L8.98317 7.7527L15.2332 1.5027C15.5652 1.17067 15.575 0.604261 15.2332 0.27223C14.8914-0.0695668 14.325-0.0695668 13.9929 0.27223L7.74293 6.52223L1.49293 0.27223C1.1609-0.0695668 0.58473-0.0793324 0.252699 0.27223C-0.0793324 0.614027-0.0793324 1.17067 0.252699 1.5027L6.5027 7.7527L0.252699 14.0125C-0.0793324 14.3445-0.0890981 14.9109 0.252699 15.2429Z" fill="#000000" fill-opacity="0.25"/></g></svg>
+                </button>
+                <br>
+            </div>
+            <div class="modal-body modal-container">
+                <div class="loading-spinner"></div>
+                <div class="container" id="modal-container">
+                    <div class="row">
+                        <div class="col-md-4" id="modal-left">
+                            <h5 class="earned-label">Achievements Earned:</h5>
+                            <h4 class="ach-earned"></h4>
+                            <div class="progress">
+                                <div class="progress-value"></div>
+                            </div>
+                            <img class="modal-img">
+                        </div>
+                        <div class="col-md-8" id="modal-right">
+                            <div id="ach-row" class="row"></div>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="error">
+                        <h2 class="error-ach">There are no achievements for this title.</h2>
+                        <h2 class="error-ser">An error occurred while requesting info from Steam.</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts
+{
+    <script type="text/javascript" src="~/js/libraryPage.js"></script>
+    <script type="text/javascript" src="~/js/followGame.js"></script>
+    <script type="text/javascript" src="@(Url.Content("~/js/search.js"))"></script>
+    <script type="text/javascript" src="@(Url.Content("~/js/achievements.js"))"></script>
+}

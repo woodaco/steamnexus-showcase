@@ -1,0 +1,39 @@
+/* Privacy notice. Text colour comes from the active theme stylesheet. */
+.privacy-notice {
+    font-family: var(--font-primary);
+    font-size: var(--fs-base);
+    max-width: 760px;
+    margin: var(--space-6) auto var(--space-10);
+    padding: 0 var(--space-4);
+}
+
+.privacy-notice h1 {
+    margin: var(--space-5) 0 var(--space-4);
+    text-align: center;
+}
+
+.privacy-notice h2 {
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-semibold);
+    margin: var(--space-6) 0 var(--space-2);
+}
+
+.privacy-notice .privacy-lead {
+    font-size: var(--fs-lg);
+}
+
+.privacy-notice p,
+.privacy-notice li {
+    line-height: var(--lh-relaxed);
+}
+
+.privacy-notice li {
+    margin-bottom: var(--space-2);
+}
+
+.privacy-notice .privacy-link {
+    display: inline;
+    color: var(--color-text-link);
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+}

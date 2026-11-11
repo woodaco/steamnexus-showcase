@@ -1,0 +1,215 @@
+/*
+ * SteamNexus Design Tokens
+ * Foundation for the unified design system
+ * All colors, typography, spacing, and effects are defined here
+ */
+
+:root {
+  /* ========================================
+     PRIMARY BRAND COLORS
+     ======================================== */
+  --color-primary-start: #667eea;
+  --color-primary-end: #764ba2;
+  --color-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --color-primary-hover: linear-gradient(135deg, #5a6fd6 0%, #6a4291 100%);
+
+  /* ========================================
+     DARK BACKGROUND SYSTEM
+     ======================================== */
+  --color-bg-dark-1: #1a1a2e;
+  --color-bg-dark-2: #16213e;
+  --color-bg-dark-3: #0f0f23;
+  --color-bg-dark: linear-gradient(180deg, #1a1a2e 0%, #0f0f23 100%);
+  --color-bg-card: rgba(22, 33, 62, 0.8);
+  --color-bg-card-hover: rgba(26, 26, 46, 0.95);
+
+  /* ========================================
+     LIGHT BACKGROUND SYSTEM
+     ======================================== */
+  --color-bg-light-1: #ffffff;
+  --color-bg-light-2: #f5f7fa;
+  --color-bg-light-3: #e8ecf1;
+
+  /* ========================================
+     ACCENT COLORS
+     ======================================== */
+  --color-accent-cyan: #4FE3BB;
+  --color-accent-cyan-hover: #3dd1a9;
+  --color-accent-red: #e34c4c;
+  --color-accent-red-hover: #d43d3d;
+  --color-accent-gold: #ffd700;
+  --color-accent-gold-hover: #e6c200;
+  --color-accent-blue: #4ba0bc;
+  --color-accent-green: #28a745;
+  --color-accent-orange: #ff8c00;
+
+  /* Competition-specific colors */
+  --color-winner-gold: #ffd700;
+  --color-second-silver: #c0c0c0;
+  --color-third-bronze: #cd7f32;
+
+  /* ========================================
+     TEXT COLORS
+     ======================================== */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-muted: rgba(255, 255, 255, 0.5);
+  --color-text-dark: #1a1a2e;
+  --color-text-dark-secondary: rgba(26, 26, 46, 0.7);
+  --color-text-link: #667eea;
+  --color-text-link-hover: #764ba2;
+
+  /* ========================================
+     BORDER COLORS
+     ======================================== */
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-light: rgba(255, 255, 255, 0.05);
+  --color-border-accent: rgba(102, 126, 234, 0.3);
+  --color-border-accent-hover: rgba(102, 126, 234, 0.5);
+
+  /* ========================================
+     TYPOGRAPHY
+     ======================================== */
+  --font-primary: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Space Mono', 'Courier New', monospace;
+
+  /* Font Sizes */
+  --fs-xs: 0.75rem;    /* 12px */
+  --fs-sm: 0.875rem;   /* 14px */
+  --fs-base: 1rem;     /* 16px */
+  --fs-lg: 1.125rem;   /* 18px */
+  --fs-xl: 1.25rem;    /* 20px */
+  --fs-2xl: 1.5rem;    /* 24px */
+  --fs-3xl: 2rem;      /* 32px */
+  --fs-4xl: 2.5rem;    /* 40px */
+  --fs-5xl: 3rem;      /* 48px */
+
+  /* Font Weights */
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+
+  /* Line Heights */
+  --lh-tight: 1.2;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.75;
+
+  /* ========================================
+     SPACING SCALE (8px base)
+     ======================================== */
+  --space-0: 0;
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.5rem;   /* 24px */
+  --space-6: 2rem;     /* 32px */
+  --space-8: 3rem;     /* 48px */
+  --space-10: 4rem;    /* 64px */
+  --space-12: 5rem;    /* 80px */
+
+  /* ========================================
+     BORDER RADIUS
+     ======================================== */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+
+  /* ========================================
+     SHADOWS
+     ======================================== */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.4);
+  --shadow-2xl: 0 20px 40px rgba(0, 0, 0, 0.5);
+
+  /* Glow Shadows */
+  --shadow-glow-primary: 0 0 20px rgba(102, 126, 234, 0.3);
+  --shadow-glow-primary-strong: 0 0 30px rgba(102, 126, 234, 0.5);
+  --shadow-glow-cyan: 0 0 20px rgba(79, 227, 187, 0.3);
+  --shadow-glow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
+  --shadow-glow-red: 0 0 20px rgba(227, 76, 76, 0.3);
+
+  /* Card Shadows */
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.25);
+
+  /* Button Shadows */
+  --shadow-btn-primary: 0 4px 15px rgba(102, 126, 234, 0.4);
+  --shadow-btn-primary-hover: 0 6px 20px rgba(102, 126, 234, 0.5);
+
+  /* ========================================
+     TRANSITIONS
+     ======================================== */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+  --transition-slow: 500ms ease;
+  --transition-bounce: 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ========================================
+     Z-INDEX SCALE
+     ======================================== */
+  --z-behind: -1;
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-toast: 800;
+
+  /* ========================================
+     LAYOUT
+     ======================================== */
+  --navbar-height: 60px;
+  --sidebar-width-collapsed: 70px;
+  --sidebar-width-expanded: 200px;
+  --container-max-width: 1400px;
+  --card-max-width: 400px;
+
+  /* ========================================
+     BREAKPOINTS (for reference in media queries)
+     ======================================== */
+  /* --bp-sm: 576px; */
+  /* --bp-md: 768px; */
+  /* --bp-lg: 992px; */
+  /* --bp-xl: 1200px; */
+  /* --bp-xxl: 1400px; */
+}
+
+/* ========================================
+   DARK THEME (default)
+   ======================================== */
+[data-theme="dark"],
+.dark-theme {
+  --color-bg-page: var(--color-bg-dark);
+  --color-bg-surface: var(--color-bg-dark-2);
+  --color-text-page: var(--color-text-primary);
+  --color-text-page-secondary: var(--color-text-secondary);
+}
+
+/* ========================================
+   LIGHT THEME
+   ======================================== */
+[data-theme="light"],
+.light-theme {
+  --color-bg-page: var(--color-bg-light-1);
+  --color-bg-surface: var(--color-bg-light-2);
+  --color-text-page: var(--color-text-dark);
+  --color-text-page-secondary: var(--color-text-dark-secondary);
+
+  /* Override shadows for light theme */
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+}

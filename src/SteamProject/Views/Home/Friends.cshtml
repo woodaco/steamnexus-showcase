@@ -1,0 +1,112 @@
+@model SteamProject.ViewModels.FriendsPageVM
+@{
+    ViewData["Title"] = "Friends";
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/FriendsPage.css">
+</head>
+
+@if (Model.Friends.Count == 0)
+{
+    <div class="wrapper">
+        <div class="no-friends-message">
+            <h2> It looks like you have no friends on this STEAM account, <br>
+            don't worry though, we'll be your friends :) </h2> <br>
+            <h3>Unexpected error? </h3> <br>
+            <h5>Make sure your Steam account is <a href="/Identity/Account/Manage/ExternalLogins" class="btn btn-outline-info justify-content-center">linked</a> to your SteamNexus account</h5>
+        </div>
+    </div>
+}
+else {
+    <div class="steamId" id=@Model.SteamId hidden></div>
+    <div class="userId" id=@Model.Id hidden></div>
+    <h1 id="friend-header">Your Friends</h1>
+    <div class="search-and-invite">
+        <input id="search-input" type="search" placeholder="🔍 search for a friend...">
+        <i id="inv-friend-i" class="bi bi-envelope-paper" title="Invite a friend to join SteamNexus" data-bs-toggle="modal" data-bs-target="#sendInviteModal"></i>
+    </div>
+    <div class="wrapper">
+    @foreach (var friend in Model.Friends)
+    {
+    <div class="card friend-card" id='@friend.SteamName @friend.Nickname'>
+        @if (friend.Linked.HasValue)
+        {
+          <img class="verified-icon" src="~/assets/verified.png" title="This user signed up and linked their STEAM account">
+        }
+        <img class="card-img-top friend-card-img" src=@friend.AvatarFullUrl alt="Title">
+        <div class="card-body friend-card-body">
+            @if (friend.Nickname != null)
+            {
+                <div class="nickname-title">
+                    <h4 class="card-title friend-name" id='name-@friend.SteamName'>@friend.Nickname</h4>
+                    <i class="revert bi bi-arrow-counterclockwise" id="@friend.SteamId" data-revert="@friend.SteamId"></i>
+                </div>
+            }
+            else {
+                <h4 class="card-title friend-name" id='name-@friend.SteamName'>@friend.SteamName</h4>
+            }
+            <p class="card-text friend-persona" id='persona-@friend.SteamId'></p>
+            <p class="card-text friend-game" id="game-@friend.SteamId"></p>
+            <div class="friend-card-btns">
+                <a href="/friend/@friend.SteamId">
+                    <button class="compare-games" title="Compare games with this friend"><i class="bi bi-controller"></i></button>
+                </a>
+                <button class="block-friend" title="Block this friend" data-friend-id="@friend.Id"><i class="bi bi-slash-circle"></i></button>
+                <button class="remove-friend" title="Remove this friend" data-friend-id="@friend.Id"><i class="bi bi-person-x"></i></button>
+            </div>
+        </div>
+    </div>
+    }
+    </div>
+
+<div class="modal fade" id="sendInviteModal" tabindex="-1" role="dialog" aria-labelledby="sendInviteModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sendInviteModalLabel">Send your friend an invite to join SteamNexus!</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <h6 id="email-error" style="visibility:hidden;">Please enter a valid email in the correct format!</h6>
+        <label for="email"><i class="bi bi-envelope-at"></i></label>
+        <input type="email" name="email" id="email-input" placeholder="handle@domain.com">
+        <br>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="send-inv" class="sn-btn sn-btn-primary">Send Invite</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+}
+
+@if (Model.Blocked != null && Model.Blocked.Any())
+{
+    <h1 id="blocked-header">Blocked Friends</h1>
+    <div class="wrapper" id="blocked-wrapper">
+        @foreach (var friend in Model.Blocked)
+        {
+            <div class="card blocked-card" id="blocked-@friend.SteamId">
+                <img class="card-img-top friend-card-img" src="@friend.AvatarFullUrl" alt="">
+                <div class="card-body friend-card-body">
+                    <h4 class="card-title friend-name">@(friend.Nickname ?? friend.SteamName)</h4>
+                    <p class="card-text">You blocked this friend; they're excluded from compare/messages.</p>
+                    <div class="friend-card-btns">
+                        <button class="unblock-friend sn-btn sn-btn-primary" title="Unblock this friend" data-friend-id="@friend.Id">
+                            <i class="bi bi-check-circle"></i> Unblock
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+
+
+@section Scripts
+{
+    <script type="text/javascript" src="~/js/friendsPage.js"></script>
+}

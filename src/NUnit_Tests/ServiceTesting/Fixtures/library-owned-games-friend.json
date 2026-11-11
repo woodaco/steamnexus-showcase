@@ -1,0 +1,20 @@
+{
+  "response": {
+    "games": [
+      {
+        "appid": 730,
+        "name": "Counter-Strike 2",
+        "playtime_forever": 500,
+        "img_icon_url": "69f7ebe2735c366c65c07e71d83494ed8e8b8c7a",
+        "has_community_visible_stats": true
+      },
+      {
+        "appid": 440,
+        "name": "Team Fortress 2",
+        "playtime_forever": 200,
+        "img_icon_url": "e3f595a92552da3d364cb294d1bea4c74b8b2bcf",
+        "has_community_visible_stats": true
+      }
+    ]
+  }
+}

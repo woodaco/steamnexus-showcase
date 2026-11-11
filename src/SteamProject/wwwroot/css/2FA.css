@@ -1,0 +1,11 @@
+/* 2FA Page Styles */
+
+.btn-primary {
+    background: var(--color-primary);
+    border: none;
+}
+
+.btn-primary:hover {
+    box-shadow: var(--shadow-btn-primary-hover);
+    transform: translateY(-2px);
+}

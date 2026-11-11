@@ -1,0 +1,7 @@
+# SteamNexus: the landing and privacy pages are public; everything else needs a sign-in.
+User-agent: *
+Disallow: /api/
+Disallow: /Identity/
+Disallow: /Admin
+Disallow: /health
+Allow: /

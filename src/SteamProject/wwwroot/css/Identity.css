@@ -1,0 +1,489 @@
+/* Identity Page Styles - Comprehensive Styling */
+
+/* ========================================
+   NAVIGATION SIDEBAR
+   ======================================== */
+
+.nav-pills {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3);
+}
+
+.nav-pills .nav-item {
+    margin-bottom: var(--space-1);
+}
+
+.nav-pills .nav-link {
+    color: var(--color-text-secondary);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    transition: var(--transition-normal);
+    font-weight: var(--fw-medium);
+}
+
+.nav-pills .nav-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--color-text-primary);
+}
+
+.nav-pills .nav-link.active {
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+}
+
+/* ========================================
+   PAGE HEADINGS
+   ======================================== */
+
+h3, h4 {
+    color: var(--color-text-primary);
+    font-weight: var(--fw-semibold);
+    margin-bottom: var(--space-4);
+}
+
+/* ========================================
+   PROFILE SECTION
+   ======================================== */
+
+/* Profile Header - Avatar + Name/Level */
+.profile-header-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--space-5);
+}
+
+.profile-avatar-section {
+    flex-shrink: 0;
+}
+
+.profile-avatar-section img {
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius-lg);
+    border: 3px solid var(--color-primary-start);
+    box-shadow: var(--shadow-md);
+    object-fit: cover;
+}
+
+.profile-info-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.profile-name-level {
+    margin: 0;
+}
+
+.profile-name-level h1 {
+    color: var(--color-text-primary);
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
+    margin: 0 0 var(--space-2) 0;
+}
+
+.steam-level-badge {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    background: var(--color-primary);
+    border-radius: var(--radius-2xl);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-primary);
+}
+
+/* Profile Content Container - Form + Friends */
+.profile-content {
+    display: flex;
+    gap: var(--space-5);
+    width: 100%;
+}
+
+.profile-form-col {
+    flex: 1;
+    min-width: 280px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-5);
+}
+
+.profile-form-col h4 {
+    margin-bottom: var(--space-4);
+    color: var(--color-text-primary);
+    font-size: var(--fs-lg);
+}
+
+/* ========================================
+   FRIENDS LIST TABLE
+   ======================================== */
+
+.friends-list-container {
+    flex: 1.5;
+    min-width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
+}
+
+.friends-list-container h4 {
+    margin-bottom: var(--space-3);
+    color: var(--color-text-primary);
+    font-size: var(--fs-lg);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.friends-list-table {
+    width: 100%;
+}
+
+.FriendEntry {
+    border-bottom: 1px solid var(--color-border);
+    transition: var(--transition-fast);
+}
+
+.FriendEntry:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.FriendEntry td {
+    padding: var(--space-2) var(--space-3);
+    color: var(--color-text-primary);
+    vertical-align: middle;
+}
+
+.FriendImage {
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+}
+
+.FriendStateTd {
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+.FriendGame {
+    color: var(--color-accent-cyan);
+    font-weight: var(--fw-medium);
+}
+
+/* ========================================
+   FORM ELEMENTS
+   ======================================== */
+
+/* Form labels */
+label.form-label,
+label.Input_Email {
+    color: var(--color-text-primary);
+}
+
+/* Floating labels */
+.form-floating > label {
+    color: var(--color-text-muted);
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    color: var(--color-text-secondary);
+}
+
+/* Input fields */
+.form-control {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    padding: var(--space-3) var(--space-4);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary-start);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.form-control::placeholder {
+    color: var(--color-text-muted);
+}
+
+.form-control:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Validation messages */
+.text-danger {
+    color: var(--color-accent-red);
+}
+
+.text-success {
+    color: var(--color-accent-green);
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+.btn-primary {
+    background: var(--color-primary);
+    border: none;
+    color: var(--color-text-primary);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    font-weight: var(--fw-medium);
+    transition: var(--transition-normal);
+}
+
+.btn-primary:hover {
+    box-shadow: var(--shadow-btn-primary-hover);
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    background: var(--color-accent-red);
+    border: none;
+    color: var(--color-text-primary);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    font-weight: var(--fw-medium);
+    transition: var(--transition-normal);
+}
+
+.btn-danger:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
+
+/* External login buttons */
+.btn-external,
+#link-login-form .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    transition: var(--transition-normal);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+}
+
+#link-login-form .btn:hover {
+    border-color: var(--color-accent-cyan);
+    box-shadow: var(--shadow-glow);
+}
+
+/* Steam button styling */
+.steam-btn {
+    color: var(--color-accent-cyan);
+}
+
+.steam-btn i {
+    font-size: var(--fs-lg);
+}
+
+/* Update profile button */
+#update-profile-button {
+    margin-top: var(--space-4);
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+
+.table {
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.table th,
+.table td {
+    color: var(--color-text-primary);
+    padding: var(--space-3) var(--space-4);
+    border-color: var(--color-border);
+    vertical-align: middle;
+}
+
+.table th {
+    background: var(--color-bg-dark-2);
+    font-weight: var(--fw-semibold);
+}
+
+.table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+/* ========================================
+   ALERTS
+   ======================================== */
+
+.alert {
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+}
+
+.alert-success {
+    background: rgba(40, 167, 69, 0.15);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    color: var(--color-accent-green);
+}
+
+.alert-danger {
+    background: rgba(227, 76, 76, 0.15);
+    border: 1px solid rgba(227, 76, 76, 0.3);
+    color: var(--color-accent-red);
+}
+
+.alert-warning {
+    background: rgba(255, 193, 7, 0.15);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    color: var(--color-accent-gold);
+}
+
+.alert-info {
+    background: rgba(102, 126, 234, 0.15);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    color: var(--color-primary-start);
+}
+
+/* ========================================
+   ADMIN SECTION
+   ======================================== */
+
+#admin {
+    background: var(--color-primary);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+}
+
+#admin h1 {
+    color: var(--color-text-primary);
+    margin: 0;
+    font-size: var(--fs-xl);
+}
+
+/* ========================================
+   2FA PAGES
+   ======================================== */
+
+.two-factor-container {
+    max-width: 600px;
+}
+
+.recovery-codes {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    font-family: var(--font-mono);
+}
+
+.recovery-codes code {
+    display: block;
+    color: var(--color-accent-cyan);
+    margin-bottom: var(--space-2);
+}
+
+.qr-code-container {
+    background: white;
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    display: inline-block;
+}
+
+/* ========================================
+   CARD STYLING
+   ======================================== */
+
+.identity-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+}
+
+.identity-card h2 {
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-4);
+}
+
+/* ========================================
+   STATUS MESSAGE
+   ======================================== */
+
+.status-message {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+    background: rgba(40, 167, 69, 0.15);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    color: var(--color-accent-green);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 992px) {
+    .profile-content {
+        flex-direction: column;
+    }
+
+    .profile-form-col,
+    .friends-list-container {
+        min-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-pills {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .profile-header-row {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--space-3);
+        padding: var(--space-4);
+    }
+
+    .profile-avatar-section img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .profile-name-level h1 {
+        font-size: var(--fs-xl);
+    }
+
+    .profile-content {
+        flex-direction: column;
+    }
+
+    .profile-form-col,
+    .friends-list-container {
+        min-width: 100%;
+        padding: var(--space-4);
+    }
+
+    .friends-list-container {
+        max-height: 350px;
+    }
+}

@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch SteamProject",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/SteamProject/bin/Debug/net8.0/SteamProject.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/SteamProject",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "preLaunchTask": "build",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5105"
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "response": {
+    "players": [
+      {
+        "steamid": "76561198000000001",
+        "communityvisibilitystate": 3,
+        "profilestate": 1,
+        "personaname": "TestPlayerOne",
+        "profileurl": "https://steamcommunity.com/id/testplayerone",
+        "avatar": "https://avatars.steamstatic.com/abc123_medium.jpg",
+        "avatarmedium": "https://avatars.steamstatic.com/abc123_medium.jpg",
+        "avatarfull": "https://avatars.steamstatic.com/abc123_full.jpg",
+        "avatarhash": "abc123",
+        "lastlogoff": 1697000000,
+        "personastate": 1,
+        "realname": "Test Player One",
+        "primaryclanid": "103582791429521412",
+        "timecreated": 1234567890,
+        "personastateflags": 0,
+        "gameextrainfo": "Counter-Strike 2",
+        "gameid": "730"
+      }
+    ]
+  }
+}

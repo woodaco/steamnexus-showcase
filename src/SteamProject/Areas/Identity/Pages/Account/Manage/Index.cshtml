@@ -1,0 +1,87 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Profile";
+    ViewData["ActivePage"] = ManageNavPages.Index;
+}
+
+<h3>@ViewData["Title"]</h3>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/Identity.css" asp-append-version="true">
+</head>
+
+@if (User.IsInRole("admin"))
+{
+    <div>
+        <div id="admin">
+            <h1>You are logged into an Admin account.</h1>
+        </div>
+    </div>
+}
+
+@if (!User.IsInRole("admin"))
+{
+    <br>
+    <input type="hidden" id="SteamId" name="SteamId" value="@Model.SteamId">
+    <input type="hidden" id="Id" name="Id" value="@Model.Id">
+
+    @* DISPLAY USER INFORMATION FROM STEAM *@
+    @if(Model.SteamName != "" && Model.SteamName != null)
+    {
+        <div class="profile-header-row">
+            <div class="profile-avatar-section" id="divSteamAvatar">
+                <img src="@Model.SteamAvatar" alt="Steam Avatar">
+            </div>
+            <div class="profile-info-section">
+                <div id="divSteamNameLevel" class="profile-name-level">
+                    <h1>@Model.SteamName</h1>
+                    <span class="steam-level-badge">Level @Model.SteamLevel</span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <partial name="_StatusMessage" for="StatusMessage" />
+
+    <div class="profile-content">
+        <div class="profile-form-col">
+            <h4>Account Settings</h4>
+            <form id="profile-form" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <div class="form-floating mb-3">
+                    <input asp-for="Username" class="form-control" placeholder="Please choose your username." disabled />
+                    <label asp-for="Username" class="form-label"></label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number."/>
+                    <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                    <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                </div>
+                <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+            </form>
+        </div>
+        @if(Model.SteamName != "" && Model.SteamName != null)
+        {
+            <div class="friends-list-container" id="friendsListDiv">
+                <h4>Friends Online</h4>
+                <table id="friendsListTable" class="friends-list-table">
+                    @foreach( var friend in Model.Friends )
+                    {
+                        <tr class="FriendEntry">
+                            <td><img class="FriendImage" src="@friend.AvatarUrl" width="32" height="32" alt=""></td>
+                            <td>@friend.SteamName</td>
+                            <td class="FriendStateTd" id="$@friend.SteamName"><i>@Model.States[friend.PersonaState ?? 0]</i></td>
+                            <td class="FriendGame" id="@friend.SteamName">@friend.GameExtraInfo</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script type="text/javascript" src="~/js/ProfileIndex.js"></script>
+}

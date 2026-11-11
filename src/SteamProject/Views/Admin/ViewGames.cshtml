@@ -1,0 +1,49 @@
+@model List<SteamProject.Models.Game>
+@{
+    ViewData["Title"] = "Admin - View Games";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/Admin.css" asp-append-version="true">
+</head>
+<div class="container admin-container">
+    <main role="main" class="pb-3">
+        <div class="admin-header">
+            <h1>Current Game List</h1>
+        </div>
+        <hr>
+        <div class="row">
+            @Html.Partial("AdminNavigation")
+            <div class="col-md-9">
+                @if(Model == null || Model.Count() == 0)
+                {
+                    <div class="admin-empty">
+                        <i class="bi bi-controller admin-empty-icon"></i>
+                        <p>There are no games in the database. You should load some first!</p>
+                    </div>
+                }
+                else
+                {
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Steam App Id</th>
+                                <th>Genres</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(var game in Model)
+                            {
+                                <tr>
+                                    <td>@game.Name</td>
+                                    <td>@game.AppId</td>
+                                    <td>@game.Genres</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </main>
+</div>

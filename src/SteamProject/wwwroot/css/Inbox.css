@@ -1,0 +1,83 @@
+/* Inbox Page Styles */
+
+.wrapper {
+    margin: var(--space-6);
+}
+
+.inbox-container {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    flex-flow: row wrap;
+}
+
+h3 {
+    margin-right: auto;
+    color: var(--color-text-primary);
+}
+
+.table {
+    width: 90%;
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+#num {
+    color: var(--color-accent-cyan);
+    width: 2.5%;
+}
+
+#tstamp {
+    color: var(--color-accent-cyan);
+    padding: 0;
+    width: 15%;
+}
+
+#mTstamp {
+    opacity: 0.8;
+    color: var(--color-text-secondary);
+}
+
+#sndr {
+    color: var(--color-accent-cyan);
+    width: 15%;
+}
+
+#sbjct {
+    color: var(--color-accent-cyan);
+    width: 10%;
+}
+
+#mSbjct {
+    opacity: 0.8;
+    color: var(--color-text-secondary);
+}
+
+#msg {
+    color: var(--color-accent-cyan);
+    width: 45%;
+}
+
+th, td, tr {
+    text-align: center;
+    color: var(--color-text-primary);
+}
+
+th {
+    background: var(--color-bg-dark-2);
+    border-bottom: 1px solid var(--color-border);
+}
+
+tr {
+    height: 4rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+tr:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+td {
+    padding-top: var(--space-4);
+}

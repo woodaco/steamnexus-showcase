@@ -1,0 +1,218 @@
+/* Show More Info Page Styles */
+
+/* Table Styling */
+th, tr, td {
+    width: 25%;
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+}
+
+th {
+    background: var(--color-bg-dark-2);
+}
+
+header {
+    margin-bottom: var(--space-6);
+}
+
+/* Game Header Section */
+.game-header-col {
+    width: 500px;
+}
+
+.game-header-img {
+    height: 200px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.game-info-col {
+    padding-top: 40px;
+}
+
+.game-title {
+    text-align: center;
+    color: var(--color-text-primary);
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
+    margin-bottom: var(--space-4);
+}
+
+/* Game Info Cards */
+.flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    justify-content: center;
+}
+
+.gameInfoCard {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    min-width: 200px;
+    max-width: 250px;
+    transition: var(--transition-normal);
+}
+
+.gameInfoCard:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.gameInfoCard .card-body {
+    padding: var(--space-4);
+}
+
+.gameInfoCard .card-title {
+    color: var(--color-primary-start);
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    margin-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--space-2);
+}
+
+.gameInfoCard .card-text {
+    color: var(--color-text-secondary);
+    font-size: var(--fs-sm);
+    margin-bottom: var(--space-2);
+}
+
+.scrollable {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollable::-webkit-scrollbar-track {
+    background: var(--color-bg-dark-3);
+    border-radius: var(--radius-full);
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+    background: var(--color-primary-start);
+    border-radius: var(--radius-full);
+}
+
+/* Screenshot Carousel */
+.game-carousel {
+    height: 400px;
+    width: 800px;
+    margin: 0 auto;
+    background: var(--color-bg-dark-2);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.game-carousel .carousel-inner {
+    height: 100%;
+}
+
+.game-carousel .carousel-item {
+    text-align: center;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-screenshot {
+    max-height: 380px;
+    max-width: 100%;
+    border-radius: var(--radius-md);
+}
+
+.game-carousel .carousel-control-prev,
+.game-carousel .carousel-control-next {
+    width: 10%;
+    opacity: 0.5;
+    transition: var(--transition-fast);
+}
+
+.game-carousel .carousel-control-prev:hover,
+.game-carousel .carousel-control-next:hover {
+    opacity: 1;
+}
+
+.game-carousel .carousel-indicators {
+    margin-bottom: var(--space-2);
+}
+
+.game-carousel .carousel-indicators button {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-text-muted);
+    border: none;
+    margin: 0 var(--space-1);
+}
+
+.game-carousel .carousel-indicators button.active {
+    background-color: var(--color-primary-start);
+}
+
+/* Requirements Table */
+.requirements-header {
+    text-align: center;
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+}
+
+.requirements-header h3 {
+    margin: 0;
+    font-size: var(--fs-xl);
+}
+
+.table {
+    background: var(--color-bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.table th h4 {
+    color: var(--color-text-primary);
+    font-size: var(--fs-base);
+    margin: 0;
+}
+
+.table td {
+    font-size: var(--fs-sm);
+    color: var(--color-text-secondary);
+    vertical-align: top;
+}
+
+.table th h3 {
+    color: var(--color-primary-start);
+    font-size: var(--fs-lg);
+    margin: 0;
+}
+
+/* No Data Message */
+.container-fluid > div > p {
+    color: var(--color-text-secondary);
+    font-size: var(--fs-lg);
+    text-align: center;
+    padding: var(--space-8);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .game-carousel {
+        width: 100%;
+        height: 300px;
+    }
+
+    .game-header-col {
+        width: 100%;
+        text-align: center;
+        margin-bottom: var(--space-4);
+    }
+
+    .game-info-col {
+        padding-top: var(--space-4);
+    }
+}

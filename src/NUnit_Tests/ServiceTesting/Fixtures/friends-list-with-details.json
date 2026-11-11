@@ -1,0 +1,30 @@
+{
+  "friendslist": {
+    "friends": [
+      {
+        "steamid": "76561198000000002",
+        "relationship": "friend",
+        "friend_since": 1234567890
+      },
+      {
+        "steamid": "76561198000000003",
+        "relationship": "friend",
+        "friend_since": 1234567891
+      }
+    ]
+  },
+  "players": [
+    {
+      "steamid": "76561198000000002",
+      "personaname": "TestPlayerTwo",
+      "profileurl": "https://steamcommunity.com/id/testplayertwo",
+      "avatarfull": ""
+    },
+    {
+      "steamid": "76561198000000003",
+      "personaname": "TestPlayerThree",
+      "profileurl": "https://steamcommunity.com/id/testplayerthree",
+      "avatarfull": ""
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+# gitleaks configuration: the default rules plus two reviewed false positives.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Reviewed false positives"
+# SpecFlow LivingDoc is generated output; the key it embeds is SpecFlow's own telemetry key, not ours.
+paths = ['''src/BDD_Tests/Documentation/LivingDoc\.html''']
+# Fixed fake key used by the SteamService unit tests.
+regexes = ['''test-api-key-12345''']

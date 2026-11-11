@@ -1,0 +1,62 @@
+{
+  "440": {
+    "success": true,
+    "data": {
+      "name": "Team Fortress 2",
+      "steam_appid": 440,
+      "required_age": 0,
+      "is_free": true,
+      "detailed_description": "Team Fortress 2 is a team-based multiplayer FPS.",
+      "about_the_game": "Nine classes of chaos.",
+      "short_description": "Nine classes of chaos.",
+      "supported_languages": "English<strong>*</strong>, French, German, Spanish - Spain, Russian<br>",
+      "header_image": "https://cdn.steamstatic.com/steam/apps/440/header.jpg",
+      "website": null,
+      "pc_requirements": {
+        "minimum": "<strong>Minimum:</strong><br><ul class=\"bb_ul\"><li>&lt;b&gt;OS&lt;/b&gt;: Windows® 7™<br></li>"
+      },
+      "mac_requirements": {},
+      "linux_requirements": [],
+      "developers": [
+        "Valve"
+      ],
+      "publishers": [
+        "Valve"
+      ],
+      "price_overview": {
+        "currency": "USD",
+        "initial": 0,
+        "final": 0,
+        "discount_percent": 0
+      },
+      "platforms": {
+        "windows": true,
+        "mac": true,
+        "linux": true
+      },
+      "metacritic": {
+        "score": 92
+      },
+      "categories": [
+        {
+          "id": 1,
+          "description": "Multi-player"
+        },
+        {
+          "id": 36,
+          "description": "Online Multi-Player"
+        }
+      ],
+      "genres": [
+        {
+          "id": "1",
+          "description": "Action"
+        },
+        {
+          "id": "37",
+          "description": "Free to Play"
+        }
+      ]
+    }
+  }
+}

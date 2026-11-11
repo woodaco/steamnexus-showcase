@@ -1,0 +1,484 @@
+$( function () {
+    showCurrentIndex();
+    checkSelect();
+});
+
+function findForm() {
+    return document.getElementById("formInternals")
+};
+
+function showCurrentIndex() {
+    categories = ["Duel", "Free-For-All"];
+
+    var selector = document.getElementById("categorySelect");
+    var index = selector.selectedIndex;
+    var text = selector.children[index].value;
+    
+    console.log(text);
+    if( text == categories[0] )
+    {
+        showDuel();
+    }
+    else if( text == categories[1] )
+    {
+        showFFA();
+    }
+}
+
+function checkSelect() {
+    var selector = document.getElementById("categorySelect");
+
+    selector.onchange = function() {
+        showCurrentIndex();
+    }
+}
+
+
+function showFFA() {
+    var pageForm = findForm();
+    pageForm.innerHTML = "";
+
+    var ffaDiv = document.createElement('div');
+    ffaDiv.className = "DynamicInput";
+    ffaDiv.id = "ffaDiv";
+
+    getFriendsListForFFA();
+
+    pageForm.append( ffaDiv );
+}
+
+function showDuel() {
+    var pageForm = findForm();
+    pageForm.innerHTML = "";
+
+    var DuelDiv = document.createElement('div');
+    DuelDiv.className = "DynamicInput";
+    DuelDiv.id = "DuelDiv";
+
+    getFriendsListForDuel();
+
+    pageForm.append(DuelDiv);
+}
+
+function singleFriendSelect( data ) {
+    var DuelDiv = document.getElementById("DuelDiv");
+    
+    var friendDiv = document.createElement('div');
+    friendDiv.className = "timeWrapper";
+
+    var friendSelectLabel = document.createElement("label");
+    friendSelectLabel.innerHTML = "<p>Friend to Duel:</p>";
+
+    friendDiv.append( friendSelectLabel );
+
+    var friendSelect = document.createElement("select");
+    friendSelect.id = "friendSelector"
+    friendSelect.name = "OpponentId";
+    $.each( data, function ( index, item ) {
+        var option = document.createElement("option");
+        option.value = `${item.steamId}`;
+        option.textContent = item.steamName; // textContent: a Steam display name must never be parsed as HTML
+
+        friendSelect.append( option );
+    });
+
+    friendSelect.onchange = function() {
+        getGamesForDuel();
+    }
+
+    friendDiv.append( friendSelect );
+
+    DuelDiv.append( friendDiv );
+
+    getGamesForDuel();
+}
+
+function ManyFriendSelect( data ) {
+    var ffaDiv = document.getElementById( 'ffaDiv' );
+    
+    var friendDiv = document.createElement('div');
+    friendDiv.className = "timeWrapper";
+
+    var friendSelectLabel = document.createElement("label");
+    friendSelectLabel.innerHTML = "Competitors:";
+
+    friendDiv.append( friendSelectLabel );
+
+    var groupSelect = document.createElement("select");
+    groupSelect.multiple = "multiple";
+    groupSelect.id = "groupSelector";
+    groupSelect["dataLiveSearch"] = "true";
+    groupSelect.className = "selectBox";
+    groupSelect.name = "OpponentIds";
+    $.each( data, function ( index, item ) {
+        var option = document.createElement("option");
+        option.value = `${item.steamId}`;
+        option.textContent = item.steamName; // textContent: a Steam display name must never be parsed as HTML
+
+        groupSelect.append( option );
+    });
+
+    groupSelect.onchange = function() {
+        // getGamesForDuel();
+        $('.selectBox').SumoSelect({
+            placeholder: 'Friends!',
+            csvDispCount: 3
+        });
+    }
+
+    friendDiv.append( groupSelect );
+
+    ffaDiv.append( friendDiv );
+
+    $('.selectBox').SumoSelect({
+        placeholder: 'Friends!',
+        csvDispCount: 3
+    });
+
+    getGamesForFFA();
+
+}
+
+function errorOnAjax() {
+    console.log( "ERROR in ajax request" );
+}
+
+function getFriendsListForDuel() {
+    // DB-backed: the current user's linked, non-blocked friends (server derives "me" from auth).
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: `/Compete/FriendsList`,
+        success: singleFriendSelect,
+        error: errorOnAjax
+    });
+}
+
+function getFriendsListForFFA() {
+    // DB-backed: the current user's linked, non-blocked friends (server derives "me" from auth).
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: `/Compete/FriendsList`,
+        success: ManyFriendSelect,
+        error: errorOnAjax
+    });
+}
+
+function addGameSelectorForDuel( data ) {
+    var achievementDivPrevious = document.getElementById("AchievementDiv");
+    if( achievementDivPrevious != null )
+    {
+        achievementDivPrevious.remove();
+    }
+
+    var GameDivPrevious = document.getElementById("GameDiv");
+    if( GameDivPrevious != null ) {
+        GameDivPrevious.remove();
+    }
+
+    var GameDiv = document.createElement('div');
+    GameDiv.id = "GameDiv";
+    GameDiv.className = "timeWrapper";
+
+
+    var gameLabel = document.createElement('label');
+    gameLabel.innerHTML = "<p>Game to Compete In:</p>";
+
+    GameDiv.append( gameLabel );
+
+
+    var gameSelector = document.createElement("select");
+    gameSelector.id = "gameSelector";
+    gameSelector.name = "GameAppId";
+
+    $.each( data, function ( index, item ) {
+        var option = document.createElement("option");
+        option.value = `${item.appId}`;
+        option.textContent = item.name; // textContent: a game name must never be parsed as HTML
+
+        gameSelector.append( option );
+    });
+
+    gameSelector.onchange = function () {
+        getAchievementsForDuel();
+    }
+
+    if( gameSelector.children != null && gameSelector.children.length > 0 )
+    {
+        warning = document.getElementById( "warningDiv" );
+        if( warning != null ) {
+            warning.remove();
+        }
+        GameDiv.append( gameSelector );
+
+        var DuelDiv = document.getElementById("DuelDiv");
+        DuelDiv.append( GameDiv );
+
+        getAchievementsForDuel();
+    } else {
+        createNoGamesWarning();
+    }
+}
+
+function addGameSelectorForFFA( data ) {
+    var achievementDivPrevious = document.getElementById("AchievementDiv");
+    if( achievementDivPrevious != null )
+    {
+        achievementDivPrevious.remove();
+    }
+
+    var GameDivPrevious = document.getElementById("GameDiv");
+    if( GameDivPrevious != null ) {
+        GameDivPrevious.remove();
+    }
+
+    var GameDiv = document.createElement('div');
+    GameDiv.id = "GameDiv";
+    GameDiv.className = "timeWrapper";
+
+
+    var gameLabel = document.createElement('label');
+    gameLabel.innerHTML = "<p>Game to Compete In:</p>";
+
+    GameDiv.append( gameLabel );
+
+
+    var gameSelector = document.createElement("select");
+    gameSelector.id = "gameSelector";
+    gameSelector.name = "GameAppId";
+
+    $.each( data, function ( index, item ) {
+        var option = document.createElement("option");
+        option.value = `${item.appId}`;
+        option.textContent = item.name; // textContent: a game name must never be parsed as HTML
+
+        gameSelector.append( option );
+    });
+
+    gameSelector.onchange = function () {
+        getAchievementsForFFA();
+    }
+
+    GameDiv.append( gameSelector );
+
+    var ffaDiv = document.getElementById("ffaDiv");
+    ffaDiv.append( GameDiv );
+
+    getAchievementsForFFA();
+
+}
+
+function getGamesForDuel() {
+    var friendSelector = document.getElementById("friendSelector");
+    var index = friendSelector.selectedIndex;
+    if (index < 0 || !friendSelector.children[index]) return; // no friends loaded yet
+    var friendId = friendSelector.children[index].value;
+
+    // DB-backed: games BOTH the current user and the chosen friend own (synced-library intersection).
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: `/Compete/SharedGames?friendSteamId=${friendId}`,
+        success: addGameSelectorForDuel,
+        error: errorOnAjax
+    });
+}
+
+function getGamesForFFA() {
+    // DB-backed: the current user's own synced library (server derives "me" from auth).
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: `/Compete/MyGames`,
+        success: addGameSelectorForFFA,
+        error: errorOnAjax
+    });
+}
+
+function showDuelAchievements( data ) {
+    var achievementDivPrevious = document.getElementById("AchievementDiv");
+    if( achievementDivPrevious != null )
+    {
+        achievementDivPrevious.remove();
+    }
+
+
+    var achievementDiv = document.createElement("ul");
+    achievementDiv.id = "AchievementDiv";
+    achievementDiv.className = "row";
+
+    var achievementList = document.createElement("ul")
+    achievementList.id = "AchievementList";
+
+    $.each( data, function ( index, item ) {
+        var achievement = document.createElement('li');
+        
+        var achName = document.createElement('b');
+        achName.innerHTML = `${item.name}: `;
+        achievement.append(achName);
+
+        var achDesc = document.createElement('i');
+        var desc = item.description;
+        if( desc != "" )
+        {
+            achDesc.innerHTML = `${desc}`;
+        }
+        else {
+            achDesc.innerHTML = `<p>No Description Provided</p>`;
+        }
+
+        achievement.append( achDesc );
+
+        achievementList.append(achievement);
+
+        var achHiddenId = document.createElement('input');
+        achHiddenId.type = 'hidden';
+        achHiddenId.name = "AchievementDisplayNames";
+        achHiddenId.value = `${item.name}`;
+
+        achievementList.append( achHiddenId );
+    });
+
+    var DuelDiv = document.getElementById('DuelDiv');
+
+    achievementDiv.append( achievementList );
+    DuelDiv.append( achievementDiv );
+
+    if ( data.length > 0 )
+    {
+        createSubmitButton();
+    } else 
+    {
+        createEmptyWarning();
+    }
+}
+
+function getAchievementsForDuel() {
+    var gameSelector = document.getElementById("gameSelector");
+    if( gameSelector.children != null && gameSelector.children.length > 0 )
+    {
+        var index = gameSelector.selectedIndex;
+        var appId = gameSelector.children[index].value;
+
+        // DB-backed: the selected game's achievements to compete over (synced GameAchievement table).
+        $.ajax({
+            type: "GET",
+            dataType: "json",
+            url: `/Compete/GameAchievements?appId=${appId}`,
+            success: showDuelAchievements,
+            error: errorOnAjax
+        });
+    }
+}
+
+function showFFAAchievements( data ) {
+    // DB-backed shape: a flat array of { name, description } (same as the Duel path).
+    var achievementDivPrevious = document.getElementById("AchievementDiv");
+    if( achievementDivPrevious != null )
+    {
+        achievementDivPrevious.remove();
+    }
+
+    var achievementDiv = document.createElement("div");
+    achievementDiv.id = "AchievementDiv";
+    achievementDiv.className = "row";
+
+    var achievementList = document.createElement("ul")
+    achievementList.id = "AchievementList";
+
+    $.each( data, function ( index, item ) {
+        var achievement = document.createElement('li');
+
+        // textContent: an achievement name/description must never be parsed as HTML.
+        var achName = document.createElement('b');
+        achName.textContent = `${item.name}: `;
+        achievement.append(achName);
+
+        var achDesc = document.createElement('i');
+        achDesc.textContent = item.description ? item.description : "No Description Provided";
+        achievement.append( achDesc );
+
+        achievementList.append(achievement);
+
+        var achHiddenId = document.createElement('input');
+        achHiddenId.type = 'hidden';
+        achHiddenId.name = "AchievementDisplayNames";
+        achHiddenId.value = `${item.name}`;
+
+        achievementList.append( achHiddenId );
+    });
+
+    achievementDiv.append( achievementList );
+
+    var ffaDiv = document.getElementById('ffaDiv');
+    ffaDiv.append( achievementDiv );
+
+    if ( data.length > 0 )
+    {
+        createSubmitButton();
+    } else
+    {
+        createEmptyWarning();
+    }
+}
+
+function getAchievementsForFFA() {
+    var gameSelector = document.getElementById("gameSelector");
+    var index = gameSelector.selectedIndex;
+    var appId = gameSelector.children[index].value;
+
+    // DB-backed: the selected game's achievements (synced GameAchievement table), same as the Duel path.
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: `/Compete/GameAchievements?appId=${appId}`,
+        success: showFFAAchievements,
+        error: errorOnAjax
+    });
+}
+
+function createSubmitButton() {
+    var div = document.getElementById( "AchievementDiv" );
+
+    var submit = document.createElement("input");
+    submit.type = "submit";
+    submit.value = "Begin Competition";
+    submit.id = "compCreateSubmit";
+
+    div.append( submit );
+}
+
+function createEmptyWarning() {
+    var div = document.getElementById( "AchievementDiv" );
+
+    var warning = document.createElement("b");
+    warning.innerHTML = "<p>WARNING: NO ACHIEVEMENTS TO COMPETE OVER <br></p>";
+
+    var suggestion = document.createElement("i");
+    suggestion.innerHTML = "<p>Your friend's achievements may be private, <br>or they may already have all of the achievements for this game. <br> Please select another game or friend.</p>";
+    
+    div.append( warning );
+    div.append( suggestion ); 
+}
+
+function createNoGamesWarning() {
+    var existingDiv = document.getElementById( "warningDiv" );
+    if( existingDiv == null ) {
+        var div = document.getElementById( "DuelDiv" );
+        
+        var warningDiv = document.createElement("div");
+        warningDiv.id = "warningDiv";
+
+    var warning = document.createElement("b");
+    warning.innerHTML = "<p>WARNING: NO SHARED GAMES FOUND <br></p>";
+
+    var suggestion = document.createElement("i");
+    suggestion.innerHTML = "<p>Your friend's game library may be private.<br> Please select another friend or try again later.</p>";
+
+        warningDiv.append( warning );
+        warningDiv.append( suggestion );
+
+        div.append( warningDiv );
+    }
+}

@@ -1,0 +1,27 @@
+{
+  "response": {
+    "games": [
+      {
+        "appid": 730,
+        "name": "Counter-Strike 2",
+        "playtime_forever": 15000,
+        "img_icon_url": "69f7ebe2735c366c75c0b71e974ddc8a9dcb3e28",
+        "rtime_last_played": 1697000000
+      },
+      {
+        "appid": 570,
+        "name": "Dota 2",
+        "playtime_forever": 8500,
+        "img_icon_url": "0bbb630d63262dd66d2aaa1b34a5c2ac5a976d8e",
+        "rtime_last_played": 1696000000
+      },
+      {
+        "appid": 440,
+        "name": "Team Fortress 2",
+        "playtime_forever": 3200,
+        "img_icon_url": "e3f595a92552da3d664ad00db71864f2af2f83c4",
+        "rtime_last_played": 1695000000
+      }
+    ]
+  }
+}
